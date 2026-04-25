@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Kepatuhan Fiskal</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Babel untuk JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- PapaParse untuk membaca Google Sheet CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
+    <!-- SheetJS untuk Export Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // ==========================================
+        // KOMPONEN IKON SVG (Pengganti lucide-react)
+        // ==========================================
+        const SvgIcon = ({ children, size = 24, className = "", title }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {title && <title>{title}</title>}
+                {children}
+            </svg>
+        );
+        const LayoutDashboard = (p) => <SvgIcon {...p}><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></SvgIcon>;
+        const MapIcon = (p) => <SvgIcon {...p}><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="21"/><line x1="15" x2="15" y1="3" y2="21"/></SvgIcon>;
+        const AlertTriangle = (p) => <SvgIcon {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></SvgIcon>;
+        const CheckCircle = (p) => <SvgIcon {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></SvgIcon>;
+        const Info = (p) => <SvgIcon {...p}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></SvgIcon>;
+        const BarChart3 = (p) => <SvgIcon {...p}><path d="M3 3v18h18"/><rect width="4" height="7" x="7" y="10" rx="1"/><rect width="4" height="12" x="15" y="5" rx="1"/></SvgIcon>;
+        const Calendar = (p) => <SvgIcon {...p}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></SvgIcon>;
+        const Layers = (p) => <SvgIcon {...p}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></SvgIcon>;
+        const Download = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></SvgIcon>;
+        const Sparkles = (p) => <SvgIcon {...p}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></SvgIcon>;
+        const Loader2 = (p) => <SvgIcon {...p}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></SvgIcon>;
+        const Database = (p) => <SvgIcon {...p}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></SvgIcon>;
+        const FileText = (p) => <SvgIcon {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></SvgIcon>;
+        const RefreshCw = (p) => <SvgIcon {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></SvgIcon>;
+        const ServerCrash = (p) => <SvgIcon {...p}><path d="M6 18h12"/><path d="M6 6h12"/><rect width="18" height="8" x="3" y="2" rx="2"/><rect width="18" height="8" x="3" y="14" rx="2"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M12 10v4"/><path d="m15 10-6 4"/></SvgIcon>;
+        const X = (p) => <SvgIcon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></SvgIcon>;
+        const TrendingUp = (p) => <SvgIcon {...p}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></SvgIcon>;
+        const Menu = (p) => <SvgIcon {...p}><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></SvgIcon>;
+        const ArrowRight = (p) => <SvgIcon {...p}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></SvgIcon>;
+
+        // ==========================================
+        // DATA PLACEHOLDER SAAT LOADING (Bisa Kosong)
+        // ==========================================
+        const fallbackApbdData = {
+          "Provinsi Banten": [
+            { year: 2026, total: 0, pegawai: 0, modal: 0 }
+          ]
+        };
+
+        const decodeRegion = {
+          "banten": "Provinsi Banten", "provinsi banten": "Provinsi Banten",
+          "tangerang selatan": "Kota Tangsel", "kota tangerang selatan": "Kota Tangsel",
+          "kab tangerang": "Kab. Tangerang", "kabupaten tangerang": "Kab. Tangerang",
+          "kab serang": "Kab. Serang", "kabupaten serang": "Kab. Serang",
+          "lebak": "Kab. Lebak", "kab lebak": "Kab. Lebak", "kabupaten lebak": "Kab. Lebak",
+          "pandeglang": "Kab. Pandeglang", "kab pandeglang": "Kab. Pandeglang", "kabupaten pandeglang": "Kab. Pandeglang",
+          "cilegon": "Kota Cilegon", "kota cilegon": "Kota Cilegon",
+          "kota serang": "Kota Serang", "kota tangerang": "Kota Tangerang"
+        };
+
+        // ==========================================
+        // KOMPONEN CHART SEDERHANA
+        // ==========================================
+        const TrendChart = ({ data, type, title, limit, colorNormal, colorAlert }) => {
+          const [hoverIdx, setHoverIdx] = useState(null);
+          const width = 500;
+          const height = 240;
+          const padding = { top: 20, right: 20, bottom: 40, left: 45 };
+          const innerWidth = width - padding.left - padding.right;
+          const innerHeight = height - padding.top - padding.bottom;
+
+          if (!data || data.length === 0) return null;
+
+          const points = data.map((d, i) => {
+            const val = (type === 'pegawai' ? d.pegawai : d.modal) / (d.total || 1) * 100;
+            const x = padding.left + (i / (data.length - 1 || 1)) * innerWidth;
+            const y = height - padding.bottom - (val / 80) * innerHeight; 
+            return { x, y, val, year: d.year, ...d };
+          });
+
+          const limitY = height - padding.bottom - (limit / 80) * innerHeight;
+          const pathD = `M ${points.map(p => `${p.x},${p.y}`).join(' L ')}`;
+          const currentVal = points.length > 0 ? points[points.length-1].val : 0;
+          const isViolation = type === 'pegawai' ? currentVal > limit : currentVal < limit;
+
+          const hoverPoint = hoverIdx !== null ? points[hoverIdx] : null;
+          const isPegawai = type === 'pegawai';
+
+          return (
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-lg h-full flex flex-col relative">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                     {type === 'pegawai' ? <Layers size={14} /> : <BarChart3 size={14} />}
+                     {title}
+                  </h3>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-3xl font-extrabold text-slate-900 tracking-tighter">
+                      {currentVal.toFixed(1)}%
+                    </span>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${isViolation ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                      {isViolation ? '⚠️ Risiko' : '✅ Aman'}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Target</p>
+                  <p className={`text-xs font-black ${type === 'pegawai' ? 'text-rose-500' : 'text-emerald-500'}`}>
+                    {type === 'pegawai' ? 'MAX' : 'MIN'} {limit}%
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative flex-1" style={{ minHeight: '180px' }}>
+                <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
+                  {[0, 20, 40, 60, 80].map(tick => {
+                    const y = height - padding.bottom - (tick / 80) * innerHeight;
+                    return (
+                      <g key={tick}>
+                        <line x1={padding.left} y1={y} x2={width - padding.right} y2={y} stroke="#f1f5f9" />
+                        <text x={padding.left - 10} y={y + 4} fontSize="9" fontWeight="700" fill="#cbd5e1" textAnchor="end">{tick}%</text>
+                      </g>
+                    );
+                  })}
+                  <line x1={padding.left} y1={limitY} x2={width - padding.right} y2={limitY} stroke={isViolation ? '#fb7185' : '#34d399'} strokeDasharray="4" />
+                  <path d={pathD} fill="none" stroke={isViolation ? colorAlert : colorNormal} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                  {points.map((p, i) => (
+                    <g key={i}>
+                      <circle cx={p.x} cy={p.y} r="5" fill="white" stroke={isViolation ? colorAlert : colorNormal} strokeWidth="2.5" onMouseEnter={() => setHoverIdx(i)} onMouseLeave={() => setHoverIdx(null)} className="cursor-pointer" />
+                      <text x={p.x} y={p.y - 12} fontSize="10" fontWeight="800" fill={isViolation ? colorAlert : colorNormal} textAnchor="middle" className="pointer-events-none">
+                        {p.val.toFixed(1)}%
+                      </text>
+                    </g>
+                  ))}
+                </svg>
+                
+                {hoverPoint !== null && (
+                  <div className="absolute bg-slate-900 text-white p-3 rounded-xl text-[10px] shadow-xl pointer-events-none z-50 w-52" style={{ left: hoverPoint.x, top: hoverPoint.y - 80, transform: 'translateX(-50%)' }}>
+                    <strong className="block mb-2 text-xs border-b border-slate-700 pb-1">{hoverPoint.year}</strong>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-slate-400">Total APBD:</span>
+                      <span className="font-bold">Rp {hoverPoint.total.toFixed(2)} T</span>
+                    </div>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-slate-400">{isPegawai ? 'Belanja Pegawai:' : 'Belanja Modal:'}</span>
+                      <span className="font-bold">Rp {(isPegawai ? hoverPoint.pegawai : hoverPoint.modal).toFixed(2)} T</span>
+                    </div>
+                    <div className="flex justify-between items-center border-t border-slate-700 pt-1 mt-1">
+                      <span className="text-slate-400">Rasio:</span>
+                      <span className="font-black text-xs text-white">{hoverPoint.val.toFixed(2)}%</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        };
+
+        // ==========================================
+        // KOMPONEN UTAMA (APP)
+        // ==========================================
+        function App() {
+          const [apbdData, setApbdData] = useState({});
+          const [posturData, setPosturData] = useState({});
+          const [selectedRegion, setSelectedRegion] = useState("Provinsi Banten");
+          
+          const [isLoading, setIsLoading] = useState(true);
+          const [syncError, setSyncError] = useState(null);
+
+          const [posturYearLeft, setPosturYearLeft] = useState(2025);
+          const [posturYearRight, setPosturYearRight] = useState(2026);
+          
+          const [isGenerating, setIsGenerating] = useState(false);
+          const [aiAnalysis, setAiAnalysis] = useState("");
+          
+          const [showInfo, setShowInfo] = useState(false); 
+          const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+          // PENGAMBILAN DATA LANGSUNG MENGGUNAKAN PAPAPARSE
+          const fetchGoogleSheetData = async () => {
+            setIsLoading(true);
+            setSyncError(null);
+            
+            try {
+              const url = "https://docs.google.com/spreadsheets/d/1HdzT1xRkgftMuQYO1qeOLJpJj6po9zXdGZLwdG2Yagc/export?format=csv";
+              const response = await fetch(url);
+              if (!response.ok) throw new Error("Gagal mengambil data dari Google Spreadsheet. Periksa koneksi Anda.");
+              
+              const csvText = await response.text();
+              
+              window.Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => {
+                  try {
+                    const parsedData = results.data;
+                    const newApbdData = {};
+                    const newPosturData = {};
+
+                    parsedData.forEach(rawRow => {
+                       const row = {};
+                       // Normalize keys to lowercase and trim spaces
+                       for(let k in rawRow) {
+                           if(rawRow.hasOwnProperty(k)) {
+                               row[k.trim().toLowerCase()] = rawRow[k];
+                           }
+                       }
+
+                       const tahunStr = (row['tahun'] || "").toString().trim();
+                       const tahun = parseInt(tahunStr);
+                       
+                       const pemdaRaw = (row['pemda'] || row['provinsi'] || "").toString().trim();
+                       const kategori = (row['kategori'] || "").toString().trim();
+                       const akun = (row['akun'] || "").toString().trim();
+                       const detil = (row['detil akun'] || row['detil_akun'] || row['detail akun'] || "").toString().trim();
+                       
+                       // WAJIB MENGGUNAKAN KOLOM ANGGARAN UNTUK SELURUH TAHUN
+                       let anggaranStr = (row['anggaran'] || "0").toString().replace(/,/g, '').trim();
+                       if (anggaranStr === '') anggaranStr = '0';
+                       const value = parseFloat(anggaranStr);
+
+                       // Validasi dan filter baris kosong/tidak relevan
+                       if (isNaN(tahun) || isNaN(value) || value === 0 || !pemdaRaw || !kategori) return;
+
+                       // Map region label untuk UI
+                       const normPemda = pemdaRaw.toLowerCase();
+                       const regionLabel = decodeRegion[normPemda] || pemdaRaw;
+                       
+                       // Inisialisasi Nested Data Postur
+                       if (!newPosturData[regionLabel]) newPosturData[regionLabel] = {};
+                       if (!newPosturData[regionLabel][tahun]) newPosturData[regionLabel][tahun] = {};
+                       if (!newPosturData[regionLabel][tahun][kategori]) newPosturData[regionLabel][tahun][kategori] = {};
+                       if (!newPosturData[regionLabel][tahun][kategori][akun]) newPosturData[regionLabel][tahun][kategori][akun] = [];
+                       
+                       newPosturData[regionLabel][tahun][kategori][akun].push({
+                         n: detil,
+                         v: value
+                       });
+                    });
+
+                    // Agregasi APBD Data
+                    Object.keys(newPosturData).forEach(region => {
+                      newApbdData[region] = [];
+                      for (let y = 2021; y <= 2026; y++) {
+                         if (!newPosturData[region][y]) continue;
+                         
+                         let totalBelanja = 0;
+                         let totalPegawai = 0;
+                         let totalModal = 0;
+
+                         const belanjaKey = Object.keys(newPosturData[region][y]).find(k => k.toLowerCase().includes("belanja daerah"));
+                         const belanjaKategori = belanjaKey ? newPosturData[region][y][belanjaKey] : null;
+                         
+                         if (belanjaKategori) {
+                           Object.values(belanjaKategori).forEach(akunArr => {
+                              akunArr.forEach(d => totalBelanja += d.v);
+                           });
+                           
+                           const pegawaiKey = Object.keys(belanjaKategori).find(k => k.toLowerCase().includes("pegawai"));
+                           if (pegawaiKey) {
+                             belanjaKategori[pegawaiKey].forEach(d => totalPegawai += d.v);
+                           }
+                           
+                           const modalKey = Object.keys(belanjaKategori).find(k => k.toLowerCase().includes("modal"));
+                           if (modalKey) {
+                             belanjaKategori[modalKey].forEach(d => totalModal += d.v);
+                           }
+                         }
+                         
+                         newApbdData[region].push({
+                           year: y,
+                           total: totalBelanja / 1000000000000,
+                           pegawai: totalPegawai / 1000000000000,
+                           modal: totalModal / 1000000000000
+                         });
+                      }
+                    });
+
+                    if (Object.keys(newApbdData).length === 0) {
+                       throw new Error("Data Kosong. Pastikan tautan CSV tersedia publik dan kolom 'Anggaran' telah terisi.");
+                    }
+
+                    setApbdData(newApbdData);
+                    setPosturData(newPosturData);
+                    
+                    const defaultRegion = Object.keys(newApbdData).includes("Provinsi Banten") ? "Provinsi Banten" : Object.keys(newApbdData)[0];
+                    setSelectedRegion(defaultRegion);
+                    
+                    setIsLoading(false);
+                  } catch (e) {
+                    console.error("Gagal memproses data:", e);
+                    setSyncError(e.message);
+                    setIsLoading(false);
+                  }
+                },
+                error: (err) => {
+                   console.error("Papa Parse Error:", err);
+                   setSyncError("Gagal mengambil CSV. Pastikan Spreadsheet diset 'Siapa saja yang memiliki link' (Public).");
+                   setIsLoading(false);
+                }
+              });
+            } catch (err) {
+              console.error(err);
+              setSyncError(err.message || "Gagal menghubungkan ke URL Google Spreadsheet.");
+              setIsLoading(false);
+            }
+          };
+
+          useEffect(() => {
+            fetchGoogleSheetData();
+          }, []);
+
+          const regions = Object.keys(apbdData);
+          const regionData = apbdData[selectedRegion] || [];
+          const latest = regionData.length > 0 ? regionData[regionData.length - 1] : { total: 0, pegawai: 0, modal: 0 };
+          const initial = regionData.length > 0 ? regionData[0] : { total: 0 };
+
+          const pRatio = latest.total > 0 ? (latest.pegawai / latest.total) * 100 : 0;
+          const mRatio = latest.total > 0 ? (latest.modal / latest.total) * 100 : 0;
+          const pAman = pRatio <= 30 && pRatio > 0;
+          const mAman = mRatio >= 40;
+
+          const currentPosturData = posturData[selectedRegion];
+
+          const generateAIAnalysis = async () => {
+            setIsGenerating(true);
+            setAiAnalysis("");
+            
+            const dataContext = `
+              Data Fiskal Tahun 2026 untuk ${selectedRegion}:
+              - Total APBD: Rp ${latest.total.toFixed(2)} Triliun
+              - Belanja Pegawai: Rp ${latest.pegawai.toFixed(2)} Triliun (${pRatio.toFixed(1)}%)
+              - Belanja Modal (Infrastruktur): Rp ${latest.modal.toFixed(2)} Triliun (${mRatio.toFixed(1)}%)
+              
+              Aturan Kepatuhan (Regulasi):
+              - Belanja Pegawai HARUS Maksimal 30.0%
+              - Belanja Modal HARUS Minimal 40.0%
+              
+              Status Kepatuhan:
+              - Belanja Pegawai: ${pAman ? 'Aman (Memenuhi Target)' : 'Risiko (Melebihi Batas Maksimal)'}
+              - Belanja Modal: ${mAman ? 'Aman (Memenuhi Target)' : 'Risiko (Kurang dari Batas Minimal)'}
+              
+              Data Historis (2021-2026):
+              ${JSON.stringify(regionData.map(d => ({ tahun: d.year, total: d.total.toFixed(2), pegawai_persen: (d.pegawai/d.total*100).toFixed(1)+'%', modal_persen: (d.modal/d.total*100).toFixed(1)+'%' })))}
+            `;
+
+            const prompt = `Anda adalah seorang Analis Keuangan Daerah yang ahli.
+            Buatkan ringkasan analisis singkat (maksimal 2 paragraf) dan 2 poin rekomendasi kebijakan yang sangat spesifik dan dapat ditindaklanjuti (actionable) untuk pimpinan daerah berdasarkan data APBD berikut:
+            
+            ${dataContext}
+            
+            Gunakan nada yang profesional, objektif, dan mendorong perbaikan. Gunakan bahasa Indonesia yang baik. Jika ada pelanggaran batas (risiko), tekankan pada urgensi untuk memperbaikinya. Format output dengan paragraf biasa dan bullet points.`;
+
+            try {
+              const apiKey = ""; 
+              const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    systemInstruction: { parts: [{ text: "You are an expert regional finance analyst." }] }
+                  }),
+                }
+              );
+
+              if (!response.ok) throw new Error("Gagal mengambil data dari API.");
+
+              const result = await response.json();
+              const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+              
+              if (text) setAiAnalysis(text);
+              else setAiAnalysis("Maaf, gagal menghasilkan analisis saat ini.");
+            } catch (error) {
+              console.error("Error calling Gemini API:", error);
+              setAiAnalysis("Terjadi kesalahan saat menghubungi layanan analisis AI. Silakan coba lagi nanti.");
+            } finally {
+              setIsGenerating(false);
+            }
+          };
+
+          useEffect(() => {
+            setAiAnalysis("");
+          }, [selectedRegion]);
+
+          const formatRupiah = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val);
+          
+          const calculateGrowth = (valLeft, valRight) => {
+            if (!valLeft || valLeft === 0) return 0;
+            return ((valRight / valLeft) - 1) * 100;
+          };
+
+          const formatMarkdown = (text) => {
+            let html = text
+              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+              .replace(/\*(.*?)\*/g, '<em>$1</em>')
+              .replace(/__(.*?)__/g, '<strong>$1</strong>')
+              .replace(/_(.*?)_/g, '<em>$1</em>');
+            return { __html: html };
+          };
+
+          const calculateCategoryTotal = (yearData, kategoriName) => {
+            if (!yearData || !yearData[kategoriName]) return 0;
+            let total = 0;
+            Object.keys(yearData[kategoriName]).forEach(akun => {
+              const isPengeluaran = kategoriName.toLowerCase().includes('pembiayaan') && akun.toLowerCase().includes('pengeluaran');
+              yearData[kategoriName][akun].forEach(detil => {
+                if (isPengeluaran) total -= detil.v;
+                else total += detil.v;
+              });
+            });
+            return total;
+          };
+
+          const handleExportExcel = async () => {
+            if (!currentPosturData) return;
+            const dataLeft = currentPosturData[posturYearLeft];
+            const dataRight = currentPosturData[posturYearRight];
+            if (!dataLeft || !dataRight) return;
+            
+            const dataArray = [];
+            const categories = ['Pendapatan Daerah', 'Belanja Daerah', 'Pembiayaan Daerah'];
+            
+            categories.forEach(kategori => {
+              const actualKatKeyRight = Object.keys(dataRight).find(k => k.toLowerCase().includes(kategori.toLowerCase()));
+              const actualKatKeyLeft = dataLeft ? Object.keys(dataLeft).find(k => k.toLowerCase().includes(kategori.toLowerCase())) : null;
+              
+              const rightDataObj = actualKatKeyRight ? dataRight[actualKatKeyRight] : null;
+              const leftDataObj = actualKatKeyLeft ? dataLeft[actualKatKeyLeft] : null;
+
+              if(rightDataObj) {
+                Object.keys(rightDataObj).forEach(akun => {
+                  rightDataObj[akun].forEach(detil => {
+                    const valR = detil.v;
+                    let valL = 0;
+                    if(leftDataObj && leftDataObj[akun]) {
+                      const matchedDetil = leftDataObj[akun].find(d => d.n === detil.n);
+                      if(matchedDetil) valL = matchedDetil.v;
+                    }
+                    
+                    const growth = calculateGrowth(valL, valR);
+                    dataArray.push({
+                      "Kategori": actualKatKeyRight,
+                      "Akun": akun,
+                      "Detil Akun": detil.n,
+                      [`Nilai ${posturYearLeft} (Rupiah)`]: valL,
+                      [`Nilai ${posturYearRight} (Rupiah)`]: valR,
+                      "Pertumbuhan (%)": isNaN(growth) ? "0%" : growth.toFixed(2) + "%"
+                    });
+                  });
+                });
+              }
+            });
+
+            try {
+              const XLSX = window.XLSX || await import('https://cdn.sheetjs.com/xlsx-latest/package/xlsx.mjs');
+              const ws = XLSX.utils.json_to_sheet(dataArray);
+              ws['!cols'] = [{wch: 25}, {wch: 35}, {wch: 50}, {wch: 25}, {wch: 25}, {wch: 15}];
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, "Postur APBD");
+              XLSX.writeFile(wb, `Perbandingan_Postur_APBD_${selectedRegion.replace(/\s+/g, '_')}_${posturYearLeft}_vs_${posturYearRight}.xlsx`);
+            } catch (error) {
+              console.error(error);
+              alert("Gagal mengekspor file Excel. Pastikan koneksi stabil.");
+            }
+          };
+
+          const handleExportFullDatabase = async () => {
+            const dataArray = [];
+            const pemdaKeys = Object.keys(posturData);
+            
+            pemdaKeys.forEach(pemdaName => {
+              const pemdaData = posturData[pemdaName];
+              Object.keys(pemdaData).forEach(year => {
+                const yearData = pemdaData[year];
+                Object.keys(yearData).forEach(katName => {
+                  Object.keys(yearData[katName]).forEach(akunName => {
+                    yearData[katName][akunName].forEach(detil => {
+                       dataArray.push({
+                         "Tahun": parseInt(year),
+                         "Pemda": pemdaName,
+                         "Kategori": katName,
+                         "Akun": akunName,
+                         "Detil Akun": detil.n,
+                         "Nilai Anggaran (Rupiah)": detil.v
+                       });
+                    });
+                  });
+                });
+              });
+            });
+
+            try {
+              const XLSX = window.XLSX || await import('https://cdn.sheetjs.com/xlsx-latest/package/xlsx.mjs');
+              const ws = XLSX.utils.json_to_sheet(dataArray);
+              ws['!cols'] = [{wch: 8}, {wch: 20}, {wch: 25}, {wch: 35}, {wch: 50}, {wch: 25}];
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, "Database APBD");
+              XLSX.writeFile(wb, `Database_APBD_2021-2026_Banten.xlsx`);
+            } catch (error) {
+              console.error(error);
+              alert("Gagal mengekspor database. Pastikan koneksi stabil.");
+            }
+          };
+
+          const handleDownloadUU = () => {
+            const link = document.createElement('a');
+            link.href = "https://peraturan.bpk.go.id/Download/189520/UU%20Nomor%201%20Tahun%202022.pdf";
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          };
+
+          return (
+            <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row overflow-hidden font-sans relative">
+              
+              {/* MODAL INFORMASI APLIKASI */}
+              {showInfo && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+                  <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto relative animate-in fade-in zoom-in duration-200">
+                    <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-slate-100 p-6 flex justify-between items-center z-10 rounded-t-3xl">
+                      <h2 className="text-xl font-black text-indigo-900 flex items-center gap-2">
+                        <Info className="text-indigo-500" />
+                        Informasi Aplikasi
+                      </h2>
+                      <button onClick={() => setShowInfo(false)} className="text-slate-400 hover:text-rose-500 transition-colors p-1.5 bg-slate-100 hover:bg-rose-50 rounded-full">
+                        <X size={18} />
+                      </button>
+                    </div>
+                    <div className="p-6 space-y-6 text-sm text-slate-600">
+                      <div>
+                        <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2"><TrendingUp size={16} className="text-indigo-500" /> CAGR Pertumbuhan</h3>
+                        <p className="leading-relaxed"><strong>Compound Annual Growth Rate (CAGR)</strong> adalah tingkat pertumbuhan tahunan majemuk yang menunjukkan rata-rata pertumbuhan selama periode waktu tertentu. Dihitung dengan rumus: <br/><code className="bg-slate-100 text-slate-800 px-2 py-1 rounded mt-2 inline-block">(Nilai Akhir / Nilai Awal)^(1/Jumlah Tahun) - 1</code>.</p>
+                      </div>
+
+                      <div>
+                        <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2"><Database size={16} className="text-indigo-500" /> Basis Data & Sinkronisasi</h3>
+                        <p className="leading-relaxed">Aplikasi ini terhubung langsung (real-time) dengan <strong>Google Spreadsheet</strong>. Data yang ditampilkan merupakan murni proyeksi/anggaran APBD yang dikelola secara live.</p>
+                      </div>
+
+                      <div>
+                        <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2"><AlertTriangle size={16} className="text-amber-500" /> Disclaimer Sumber Data</h3>
+                        <p className="leading-relaxed">Seluruh data primer yang disajikan pada dashboard ini diolah dan bersumber dari <strong>Portal DJPK</strong> (Direktorat Jenderal Perimbangan Keuangan) Kementerian Keuangan RI. Aplikasi ini berfungsi sebagai alat bantu visualisasi dan pemantauan kepatuhan fiskal daerah berdasarkan regulasi.</p>
+                      </div>
+
+                      <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                        <h3 className="font-bold text-indigo-900 mb-1">Kontak Informasi</h3>
+                        <p className="text-indigo-700">Untuk pertanyaan lebih lanjut atau kendala terkait aplikasi, silakan hubungi:<br/><strong>Dilly - 0812 2019 1166</strong></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* SIDEBAR */}
+              <aside className={`bg-white border-slate-200 flex flex-col shrink-0 z-20 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-full h-screen md:w-72 border-r opacity-100' : 'w-0 h-0 md:h-screen border-0 opacity-0 overflow-hidden'}`}>
+                <div className="p-6 border-b border-slate-100">
+                  <div className="flex items-center justify-between mb-1">
+                     <div className="flex items-center gap-2 text-indigo-600">
+                       <LayoutDashboard size={20} strokeWidth={3} />
+                       <h1 className="text-xl font-black italic tracking-tighter">
+                         FISKAL<span className="text-slate-800">BANTEN</span> 
+                         <span className="text-[10px] text-indigo-500 not-italic ml-1 align-top">v.1.0</span>
+                       </h1>
+                     </div>
+                     
+                     <button onClick={fetchGoogleSheetData} disabled={isLoading} className="text-slate-400 hover:text-indigo-600 transition-colors" title="Sinkronisasi ulang dari Spreadsheet">
+                       <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+                     </button>
+                  </div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Bidang PPA II Kanwil DJPb Provinsi Banten</p>
+                </div>
+
+                <div className="p-4 overflow-y-auto flex-1 custom-scrollbar space-y-1 relative">
+                  {isLoading ? (
+                    <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-3 mt-10">
+                      <Loader2 className="animate-spin" size={24} />
+                      <p className="text-xs font-bold uppercase tracking-wider">Menyinkronkan Data...</p>
+                    </div>
+                  ) : syncError ? (
+                     <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+                       <ServerCrash size={32} className="text-rose-400 mb-3" />
+                       <p className="text-rose-600 text-xs font-medium">{syncError}</p>
+                     </div>
+                  ) : (
+                    regions.map((region) => {
+                      const rd = apbdData[region][apbdData[region].length-1];
+                      const pViol = rd ? (rd.pegawai / rd.total) * 100 > 30 : false;
+                      return (
+                        <button
+                          key={region}
+                          onClick={() => setSelectedRegion(region)}
+                          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
+                            selectedRegion === region ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'hover:bg-slate-50 text-slate-600'
+                          }`}
+                        >
+                          <span className="text-xs font-bold">{region}</span>
+                          <div className={`w-2 h-2 rounded-full ${pViol ? 'bg-rose-400' : 'bg-emerald-400'} border border-white`} />
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
+              </aside>
+
+              {/* CONTENT */}
+              <main className="flex-1 overflow-y-auto h-screen p-6 md:p-10 relative">
+                
+                {/* Tombol Info Sudut Kanan Atas */}
+                <button 
+                  onClick={() => setShowInfo(true)}
+                  className="absolute top-6 right-6 md:top-8 md:right-8 bg-white p-2.5 rounded-full shadow-sm text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all z-40 border border-slate-200"
+                  title="Informasi Aplikasi"
+                >
+                  <Info size={22} />
+                </button>
+
+                {isLoading ? (
+                  <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-4">
+                     <Loader2 size={32} className="animate-spin text-indigo-500" />
+                     <p className="font-bold text-sm tracking-wide uppercase">Membaca Database APBD...</p>
+                  </div>
+                ) : syncError ? (
+                  <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-4">
+                     <ServerCrash size={48} className="text-rose-300" />
+                     <h2 className="text-xl font-black text-rose-600 tracking-tight">Koneksi Gagal</h2>
+                     <p className="text-sm font-medium text-slate-500 text-center max-w-md">{syncError}</p>
+                     <button onClick={fetchGoogleSheetData} className="mt-4 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-md hover:bg-indigo-700 transition-colors">Coba Lagi</button>
+                  </div>
+                ) : (
+                <div className="max-w-5xl mx-auto">
+                  
+                  <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 pr-14 md:pr-16">
+                    <div>
+                      <div className="flex items-center mb-4">
+                        <button 
+                          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                          className="p-1.5 md:p-2 bg-white rounded-xl border border-slate-200 shadow-sm text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all mr-3"
+                          title={isSidebarOpen ? "Sembunyikan Panel" : "Tampilkan Panel"}
+                        >
+                          <Menu size={16} />
+                        </button>
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 rounded-lg text-[10px] font-black text-indigo-600 uppercase tracking-widest">
+                          <MapIcon size={12} /> Dashboard Kepatuhan terhadap UU HKPD
+                        </div>
+                      </div>
+                      <h2 className="text-4xl font-black text-slate-900 tracking-tighter">{selectedRegion}</h2>
+                      <div className="flex items-center gap-3 mt-2 text-slate-400 font-bold text-xs uppercase">
+                        <Calendar size={14} /> Periode 2021 - 2026
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <div className="bg-white px-5 py-4 rounded-3xl border border-slate-200 shadow-sm">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total APBD 2026</p>
+                        <p className="text-2xl font-black text-slate-900 tracking-tighter">Rp {latest.total.toFixed(2)} <span className="text-[10px] text-slate-400">Triliun</span></p>
+                      </div>
+                      <div className="bg-white px-5 py-4 rounded-3xl border border-slate-200 shadow-sm">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">CAGR Pertumbuhan</p>
+                        <p className="text-2xl font-black text-emerald-600 tracking-tighter">
+                          {initial.total > 0 ? ((Math.pow(latest.total/initial.total, 1/5)-1)*100).toFixed(1) : 0}%
+                        </p>
+                      </div>
+                    </div>
+                  </header>
+                  
+                  {/* PANEL: AI Analysis */}
+                  <div className="mb-8">
+                    <div className={`p-6 rounded-[2rem] border transition-all duration-500 overflow-hidden relative ${aiAnalysis || isGenerating ? 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-100 shadow-md' : 'bg-white border-slate-200 shadow-sm'}`}>
+                      
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                          <h3 className="text-lg font-black text-indigo-900 flex items-center gap-2">
+                            <Sparkles className="text-indigo-500" size={20} />
+                            Analisis dan Rekomendasi (menurut AI)
+                          </h3>
+                          <p className="text-xs text-indigo-600/70 font-medium mt-1 max-w-xl">
+                            Dapatkan analisis dan rekomendasi kebijakan untuk <strong>{selectedRegion}</strong> berdasarkan data APBD terkini.
+                          </p>
+                        </div>
+                        
+                        <button
+                          onClick={generateAIAnalysis}
+                          disabled={isGenerating}
+                          className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-md hover:shadow-lg flex items-center gap-2 whitespace-nowrap shrink-0"
+                        >
+                          {isGenerating ? (
+                            <>
+                              <Loader2 size={16} className="animate-spin" />
+                              Menganalisis...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles size={16} />
+                              Hasilkan Analisis
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      <div className={`transition-all duration-500 ${aiAnalysis ? 'mt-6 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+                        <div className="h-px w-full bg-gradient-to-r from-transparent via-indigo-200 to-transparent mb-6"></div>
+                        <div className="overflow-y-auto max-h-[400px] custom-scrollbar pr-4">
+                          <div className="prose prose-sm prose-indigo max-w-none prose-p:leading-relaxed prose-li:marker:text-indigo-500 text-slate-700">
+                            {aiAnalysis.split('\n').map((line, i) => {
+                               if (line.startsWith('- ') || line.startsWith('* ')) {
+                                 return <li key={i} className="ml-4 mb-2" dangerouslySetInnerHTML={formatMarkdown(line.substring(2))} />;
+                               } else if (line.trim().length > 0) {
+                                 return <p key={i} className="mb-3" dangerouslySetInnerHTML={formatMarkdown(line)} />;
+                               }
+                               return null;
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 relative overflow-hidden group transition-all hover:shadow-xl">
+                      <div className={`absolute top-0 left-0 w-2 h-full ${pAman ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                      <div className="flex justify-between items-start mb-6">
+                        <h4 className="text-lg font-black text-slate-800 tracking-tight uppercase">Belanja Pegawai</h4>
+                        {pAman ? <CheckCircle className="text-emerald-500" /> : <AlertTriangle className="text-rose-500" />}
+                      </div>
+                      <div className="flex items-baseline gap-1 mb-6">
+                        <span className="text-6xl font-black text-slate-900 tracking-tighter">{pRatio.toFixed(1)}%</span>
+                        <span className="text-xs font-bold text-slate-400">/ 30.0% Max</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                        <div className={`h-full transition-all duration-1000 ${pAman ? 'bg-emerald-500' : 'bg-rose-500'}`} style={{ width: `${Math.min(pRatio, 100)}%` }} />
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 relative overflow-hidden group transition-all hover:shadow-xl">
+                      <div className={`absolute top-0 left-0 w-2 h-full ${mAman ? 'bg-indigo-500' : 'bg-amber-500'}`} />
+                      <div className="flex justify-between items-start mb-6">
+                        <h4 className="text-lg font-black text-slate-800 tracking-tight uppercase">Belanja Modal</h4>
+                        {mAman ? <CheckCircle className="text-indigo-500" /> : <AlertTriangle className="text-amber-500" />}
+                      </div>
+                      <div className="flex items-baseline gap-1 mb-6">
+                        <span className="text-6xl font-black text-slate-900 tracking-tighter">{mRatio.toFixed(1)}%</span>
+                        <span className="text-xs font-bold text-slate-400">/ 40.0% Min</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                        <div className={`h-full transition-all duration-1000 ${mAman ? 'bg-indigo-500' : 'bg-amber-500'}`} style={{ width: `${Math.min(mRatio, 100)}%` }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
+                    <TrendChart data={regionData} type="pegawai" title="Rasio Belanja Pegawai" limit={30} colorNormal="#6366f1" colorAlert="#ef4444" />
+                    <TrendChart data={regionData} type="modal" title="Proyeksi Rasio Belanja Infrastruktur" limit={40} colorNormal="#4f46e5" colorAlert="#f59e0b" />
+                  </div>
+
+                  {/* PANEL: Postur APBD (Perbandingan) */}
+                  <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 mt-6 shadow-sm relative overflow-hidden">
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+                      <div>
+                        <h3 className="text-xl font-black text-slate-800 tracking-tight uppercase flex items-center gap-2">
+                           Postur APBD
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={handleExportExcel}
+                          className="flex items-center gap-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-4 py-2.5 rounded-xl font-bold text-xs transition-all hover:shadow-sm"
+                        >
+                          <Download size={16} /> Export to Excel
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-slate-50/50 border border-slate-100 rounded-3xl p-6 shadow-sm overflow-x-auto">
+                      <div className="min-w-[800px]">
+                        <div className="grid grid-cols-12 gap-4 border-b-2 border-slate-200 pb-4 mb-6 items-end">
+                          <div className="col-span-5">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Akun</span>
+                          </div>
+                          
+                          <div className="col-span-3 text-right">
+                            <select 
+                              value={posturYearLeft} 
+                              onChange={(e) => setPosturYearLeft(Number(e.target.value))}
+                              className="bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl px-3 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm inline-block"
+                            >
+                              {[2021, 2022, 2023, 2024, 2025, 2026].map(y => (
+                                <option key={y} value={y}>{y}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="col-span-1 flex justify-center items-center opacity-30">
+                             <ArrowRight size={18} />
+                          </div>
+
+                          <div className="col-span-3 text-right">
+                            <select 
+                                value={posturYearRight} 
+                                onChange={(e) => setPosturYearRight(Number(e.target.value))}
+                                className="bg-indigo-50 border border-indigo-200 text-indigo-700 text-sm font-bold rounded-xl px-3 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm"
+                              >
+                                {[2021, 2022, 2023, 2024, 2025, 2026].map(y => (
+                                  <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                          </div>
+                          
+                          <div className="col-span-1 text-right">
+                             <span className="text-xs font-bold text-slate-400 uppercase w-full block text-right">Growth</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col space-y-6">
+                          {(() => {
+                            if (!currentPosturData) return <p className="text-slate-400 text-sm">Data Postur tidak dimuat.</p>;
+                            
+                            const dataLeft = currentPosturData[posturYearLeft];
+                            const dataRight = currentPosturData[posturYearRight];
+                            
+                            if (!dataRight && !dataLeft) return <p className="text-slate-400 text-sm italic">Data tidak tersedia untuk rentang tahun yang dipilih.</p>;
+
+                            const allKategoriKeys = new Set([
+                              ...(dataRight ? Object.keys(dataRight) : []),
+                              ...(dataLeft ? Object.keys(dataLeft) : [])
+                            ]);
+                            
+                            const sortedCategories = Array.from(allKategoriKeys).sort((a,b) => {
+                              if (a.toLowerCase().includes("pendapatan")) return -1;
+                              if (b.toLowerCase().includes("pendapatan")) return 1;
+                              if (a.toLowerCase().includes("belanja")) return -1;
+                              if (b.toLowerCase().includes("belanja")) return 1;
+                              return 0;
+                            });
+
+                            return sortedCategories.map(kategori => {
+                              
+                              const totalKatRight = calculateCategoryTotal(dataRight, kategori);
+                              const totalKatLeft = calculateCategoryTotal(dataLeft, kategori);
+                              const growthKat = calculateGrowth(totalKatLeft, totalKatRight);
+                              
+                              const katRightData = dataRight?.[kategori] || {};
+                              const katLeftData = dataLeft?.[kategori] || {};
+                              
+                              const allAkuns = new Set([...Object.keys(katRightData), ...Object.keys(katLeftData)]);
+
+                              return (
+                                <div key={kategori} className="border-b border-slate-200 pb-6 last:border-0 last:pb-0">
+                                   <div className="grid grid-cols-12 gap-4 items-center mb-4 bg-indigo-50/80 px-3 py-2 rounded-lg">
+                                     <div className="col-span-5">
+                                       <h3 className="font-black text-indigo-900 text-sm uppercase tracking-wider m-0">
+                                         {kategori}
+                                       </h3>
+                                     </div>
+                                     
+                                     <div className="col-span-3 text-right pr-2">
+                                       <span className="font-bold text-slate-600 whitespace-nowrap">
+                                         {totalKatLeft !== 0 ? formatRupiah(totalKatLeft) : '-'}
+                                       </span>
+                                     </div>
+                                     
+                                     <div className="col-span-1 flex justify-center opacity-30">
+                                        <div className="h-4 border-l border-slate-400"></div>
+                                     </div>
+
+                                     <div className="col-span-2 text-right">
+                                       <span className="font-black text-indigo-700 whitespace-nowrap">
+                                         {totalKatRight !== 0 ? formatRupiah(totalKatRight) : '-'}
+                                       </span>
+                                     </div>
+                                     
+                                     <div className="col-span-1 text-right flex justify-end">
+                                        <div className={`w-16 flex justify-end shrink-0 ${totalKatLeft === 0 ? 'opacity-0' : ''}`}>
+                                          <span className={`px-1.5 py-0.5 rounded flex justify-end font-bold text-[10px] w-full text-right ${growthKat > 0 ? 'bg-emerald-200 text-emerald-800' : growthKat < 0 ? 'bg-rose-200 text-rose-800' : 'bg-slate-200 text-slate-700'}`}>
+                                            {growthKat > 0 ? '+' : ''}{growthKat.toFixed(1)}%
+                                          </span>
+                                       </div>
+                                     </div>
+                                   </div>
+
+                                   <div className="pl-4 flex flex-col space-y-5">
+                                     {Array.from(allAkuns).map(akun => {
+                                       const arrRight = katRightData[akun] || [];
+                                       const arrLeft = katLeftData[akun] || [];
+                                       
+                                       const allDetilsMap = new Map();
+                                       arrRight.forEach(d => allDetilsMap.set(d.n, { ...allDetilsMap.get(d.n), vRight: d.v }));
+                                       arrLeft.forEach(d => allDetilsMap.set(d.n, { ...allDetilsMap.get(d.n), vLeft: d.v }));
+
+                                       return (
+                                         <div key={akun}>
+                                           <h4 className="font-bold text-slate-700 text-xs uppercase mb-2 border-b border-slate-100 pb-1.5 tracking-wide">
+                                             {akun}
+                                           </h4>
+                                           <div className="pl-4 flex flex-col space-y-1.5 pt-1">
+                                             {Array.from(allDetilsMap.entries()).map(([detilName, vals], idx) => {
+                                               
+                                               const valLeftRaw = vals.vLeft || 0;
+                                               const valRightRaw = vals.vRight || 0;
+                                               
+                                               const growthPct = calculateGrowth(valLeftRaw, valRightRaw);
+                                               const hasLeftData = valLeftRaw !== 0;
+
+                                               return (
+                                                 <div key={idx} className="grid grid-cols-12 gap-4 items-center text-xs hover:bg-white p-1.5 -mx-1.5 rounded transition-colors group">
+                                                   
+                                                   <div className="col-span-5 pr-2">
+                                                      <span className="text-slate-600 relative before:content-['•'] before:absolute before:-left-3.5 before:text-slate-300 leading-tight block truncate" title={detilName}>
+                                                       {detilName}
+                                                     </span>
+                                                   </div>
+                                                   
+                                                   <div className="col-span-3 text-right pr-2">
+                                                     <span className="font-medium text-slate-500 whitespace-nowrap">
+                                                       {hasLeftData ? formatRupiah(valLeftRaw) : '-'}
+                                                     </span>
+                                                   </div>
+
+                                                   <div className="col-span-1 border-l border-slate-100 mx-auto h-3"></div>
+
+                                                   <div className="col-span-2 text-right">
+                                                     <span className="font-extrabold text-slate-800 whitespace-nowrap group-hover:text-indigo-600 transition-colors text-right">
+                                                       {valRightRaw !== 0 ? formatRupiah(valRightRaw) : '-'}
+                                                     </span>
+                                                   </div>
+                                                   
+                                                   <div className="col-span-1 flex justify-end">
+                                                     <div className={`w-16 flex justify-end shrink-0 ${!hasLeftData ? 'opacity-0' : ''}`}>
+                                                        <span className={`px-1.5 py-0.5 rounded flex justify-end font-bold text-[10px] w-full text-right ${growthPct > 0 ? 'bg-emerald-50 text-emerald-600' : growthPct < 0 ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-500'}`}>
+                                                          {growthPct > 0 ? '+' : ''}{growthPct.toFixed(1)}%
+                                                        </span>
+                                                     </div>
+                                                   </div>
+                                                 </div>
+                                               );
+                                             })}
+                                           </div>
+                                         </div>
+                                       )
+                                     })}
+                                   </div>
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-6 mb-12 px-2">
+                     <div className="text-sm text-slate-500 flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <Info size={16} className="text-slate-400" />
+                          Sumber: Portal DJPK (<a href="https://djpk.kemenkeu.go.id/portal/data/apbd" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 hover:underline font-medium transition-colors">https://djpk.kemenkeu.go.id/portal/data/apbd</a>)
+                        </div>
+                        <button 
+                          onClick={handleDownloadUU}
+                          className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 font-bold transition-colors w-fit group"
+                          title="Unduh file UU Nomor 1 Tahun 2022.pdf"
+                        >
+                          <FileText size={16} className="group-hover:scale-110 transition-transform" />
+                          Unduh Dokumen UU HKPD (No. 1 Tahun 2022)
+                        </button>
+                     </div>
+                     
+                     <button 
+                        onClick={handleExportFullDatabase}
+                        className="flex items-center gap-2 bg-slate-800 text-white hover:bg-slate-700 px-5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-md hover:shadow-lg self-start md:self-auto"
+                     >
+                        <Database size={16} /> Export Database Lengkap
+                     </button>
+                  </div>
+
+                </div>
+              )}
+            </main>
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+</body>
+</html>
