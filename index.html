@@ -53,7 +53,6 @@
         const Calendar = (p) => <SvgIcon {...p}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></SvgIcon>;
         const Layers = (p) => <SvgIcon {...p}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></SvgIcon>;
         const Download = (p) => <SvgIcon {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></SvgIcon>;
-        const Sparkles = (p) => <SvgIcon {...p}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></SvgIcon>;
         const Loader2 = (p) => <SvgIcon {...p}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></SvgIcon>;
         const Database = (p) => <SvgIcon {...p}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></SvgIcon>;
         const FileText = (p) => <SvgIcon {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></SvgIcon>;
@@ -195,9 +194,6 @@
 
           const [posturYearLeft, setPosturYearLeft] = useState(2025);
           const [posturYearRight, setPosturYearRight] = useState(2026);
-          
-          const [isGenerating, setIsGenerating] = useState(false);
-          const [aiAnalysis, setAiAnalysis] = useState("");
           
           const [showInfo, setShowInfo] = useState(false); 
           const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -348,82 +344,11 @@
 
           const currentPosturData = posturData[selectedRegion];
 
-          const generateAIAnalysis = async () => {
-            setIsGenerating(true);
-            setAiAnalysis("");
-            
-            const dataContext = `
-              Data Fiskal Tahun 2026 untuk ${selectedRegion}:
-              - Total APBD: Rp ${latest.total.toFixed(2)} Triliun
-              - Belanja Pegawai: Rp ${latest.pegawai.toFixed(2)} Triliun (${pRatio.toFixed(1)}%)
-              - Belanja Modal (Infrastruktur): Rp ${latest.modal.toFixed(2)} Triliun (${mRatio.toFixed(1)}%)
-              
-              Aturan Kepatuhan (Regulasi):
-              - Belanja Pegawai HARUS Maksimal 30.0%
-              - Belanja Modal HARUS Minimal 40.0%
-              
-              Status Kepatuhan:
-              - Belanja Pegawai: ${pAman ? 'Aman (Memenuhi Target)' : 'Risiko (Melebihi Batas Maksimal)'}
-              - Belanja Modal: ${mAman ? 'Aman (Memenuhi Target)' : 'Risiko (Kurang dari Batas Minimal)'}
-              
-              Data Historis (2021-2026):
-              ${JSON.stringify(regionData.map(d => ({ tahun: d.year, total: d.total.toFixed(2), pegawai_persen: (d.pegawai/d.total*100).toFixed(1)+'%', modal_persen: (d.modal/d.total*100).toFixed(1)+'%' })))}
-            `;
-
-            const prompt = `Anda adalah seorang Analis Keuangan Daerah yang ahli.
-            Buatkan ringkasan analisis singkat (maksimal 2 paragraf) dan 2 poin rekomendasi kebijakan yang sangat spesifik dan dapat ditindaklanjuti (actionable) untuk pimpinan daerah berdasarkan data APBD berikut:
-            
-            ${dataContext}
-            
-            Gunakan nada yang profesional, objektif, dan mendorong perbaikan. Gunakan bahasa Indonesia yang baik. Jika ada pelanggaran batas (risiko), tekankan pada urgensi untuk memperbaikinya. Format output dengan paragraf biasa dan bullet points.`;
-
-            try {
-              const apiKey = ""; 
-              const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    systemInstruction: { parts: [{ text: "You are an expert regional finance analyst." }] }
-                  }),
-                }
-              );
-
-              if (!response.ok) throw new Error("Gagal mengambil data dari API.");
-
-              const result = await response.json();
-              const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-              
-              if (text) setAiAnalysis(text);
-              else setAiAnalysis("Maaf, gagal menghasilkan analisis saat ini.");
-            } catch (error) {
-              console.error("Error calling Gemini API:", error);
-              setAiAnalysis("Terjadi kesalahan saat menghubungi layanan analisis AI. Silakan coba lagi nanti.");
-            } finally {
-              setIsGenerating(false);
-            }
-          };
-
-          useEffect(() => {
-            setAiAnalysis("");
-          }, [selectedRegion]);
-
           const formatRupiah = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val);
           
           const calculateGrowth = (valLeft, valRight) => {
             if (!valLeft || valLeft === 0) return 0;
             return ((valRight / valLeft) - 1) * 100;
-          };
-
-          const formatMarkdown = (text) => {
-            let html = text
-              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-              .replace(/\*(.*?)\*/g, '<em>$1</em>')
-              .replace(/__(.*?)__/g, '<strong>$1</strong>')
-              .replace(/_(.*?)_/g, '<em>$1</em>');
-            return { __html: html };
           };
 
           const calculateCategoryTotal = (yearData, kategoriName) => {
@@ -692,58 +617,6 @@
                       </div>
                     </div>
                   </header>
-                  
-                  {/* PANEL: AI Analysis */}
-                  <div className="mb-8">
-                    <div className={`p-6 rounded-[2rem] border transition-all duration-500 overflow-hidden relative ${aiAnalysis || isGenerating ? 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-100 shadow-md' : 'bg-white border-slate-200 shadow-sm'}`}>
-                      
-                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                          <h3 className="text-lg font-black text-indigo-900 flex items-center gap-2">
-                            <Sparkles className="text-indigo-500" size={20} />
-                            Analisis dan Rekomendasi (menurut AI)
-                          </h3>
-                          <p className="text-xs text-indigo-600/70 font-medium mt-1 max-w-xl">
-                            Dapatkan analisis dan rekomendasi kebijakan untuk <strong>{selectedRegion}</strong> berdasarkan data APBD terkini.
-                          </p>
-                        </div>
-                        
-                        <button
-                          onClick={generateAIAnalysis}
-                          disabled={isGenerating}
-                          className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-md hover:shadow-lg flex items-center gap-2 whitespace-nowrap shrink-0"
-                        >
-                          {isGenerating ? (
-                            <>
-                              <Loader2 size={16} className="animate-spin" />
-                              Menganalisis...
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles size={16} />
-                              Hasilkan Analisis
-                            </>
-                          )}
-                        </button>
-                      </div>
-
-                      <div className={`transition-all duration-500 ${aiAnalysis ? 'mt-6 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-                        <div className="h-px w-full bg-gradient-to-r from-transparent via-indigo-200 to-transparent mb-6"></div>
-                        <div className="overflow-y-auto max-h-[400px] custom-scrollbar pr-4">
-                          <div className="prose prose-sm prose-indigo max-w-none prose-p:leading-relaxed prose-li:marker:text-indigo-500 text-slate-700">
-                            {aiAnalysis.split('\n').map((line, i) => {
-                               if (line.startsWith('- ') || line.startsWith('* ')) {
-                                 return <li key={i} className="ml-4 mb-2" dangerouslySetInnerHTML={formatMarkdown(line.substring(2))} />;
-                               } else if (line.trim().length > 0) {
-                                 return <p key={i} className="mb-3" dangerouslySetInnerHTML={formatMarkdown(line)} />;
-                               }
-                               return null;
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 relative overflow-hidden group transition-all hover:shadow-xl">
@@ -803,7 +676,7 @@
                     <div className="bg-slate-50/50 border border-slate-100 rounded-3xl p-6 shadow-sm overflow-x-auto">
                       <div className="min-w-[800px]">
                         <div className="grid grid-cols-12 gap-4 border-b-2 border-slate-200 pb-4 mb-6 items-end">
-                          <div className="col-span-5">
+                          <div className="col-span-4">
                             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Akun</span>
                           </div>
                           
@@ -823,7 +696,7 @@
                              <ArrowRight size={18} />
                           </div>
 
-                          <div className="col-span-3 text-right">
+                          <div className="col-span-3 text-right pr-4 md:pr-8">
                             <select 
                                 value={posturYearRight} 
                                 onChange={(e) => setPosturYearRight(Number(e.target.value))}
@@ -876,7 +749,7 @@
                               return (
                                 <div key={kategori} className="border-b border-slate-200 pb-6 last:border-0 last:pb-0">
                                    <div className="grid grid-cols-12 gap-4 items-center mb-4 bg-indigo-50/80 px-3 py-2 rounded-lg">
-                                     <div className="col-span-5">
+                                     <div className="col-span-4">
                                        <h3 className="font-black text-indigo-900 text-sm uppercase tracking-wider m-0">
                                          {kategori}
                                        </h3>
@@ -892,7 +765,7 @@
                                         <div className="h-4 border-l border-slate-400"></div>
                                      </div>
 
-                                     <div className="col-span-2 text-right">
+                                     <div className="col-span-3 text-right pr-4 md:pr-8">
                                        <span className="font-black text-indigo-700 whitespace-nowrap">
                                          {totalKatRight !== 0 ? formatRupiah(totalKatRight) : '-'}
                                        </span>
@@ -933,7 +806,7 @@
                                                return (
                                                  <div key={idx} className="grid grid-cols-12 gap-4 items-center text-xs hover:bg-white p-1.5 -mx-1.5 rounded transition-colors group">
                                                    
-                                                   <div className="col-span-5 pr-2">
+                                                   <div className="col-span-4 pr-2">
                                                       <span className="text-slate-600 relative before:content-['•'] before:absolute before:-left-3.5 before:text-slate-300 leading-tight block truncate" title={detilName}>
                                                        {detilName}
                                                      </span>
@@ -947,8 +820,8 @@
 
                                                    <div className="col-span-1 border-l border-slate-100 mx-auto h-3"></div>
 
-                                                   <div className="col-span-2 text-right">
-                                                     <span className="font-extrabold text-slate-800 whitespace-nowrap group-hover:text-indigo-600 transition-colors text-right">
+                                                   <div className="col-span-3 text-right pr-4 md:pr-8">
+                                                     <span className="font-extrabold text-slate-800 whitespace-nowrap group-hover:text-indigo-600 transition-colors">
                                                        {valRightRaw !== 0 ? formatRupiah(valRightRaw) : '-'}
                                                      </span>
                                                    </div>
