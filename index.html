@@ -510,10 +510,10 @@
               <aside className={`bg-white border-slate-200 flex flex-col shrink-0 z-20 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-full h-screen md:w-72 border-r opacity-100' : 'w-0 h-0 md:h-screen border-0 opacity-0 overflow-hidden'}`}>
                 <div className="p-6 border-b border-slate-100">
                   <div className="flex items-center justify-between mb-1">
-                     <div className="flex items-center gap-2 text-indigo-600">
-                       <LayoutDashboard size={20} strokeWidth={3} />
+                     <div className="flex items-center gap-2">
+                       <LayoutDashboard size={20} strokeWidth={3} className="text-indigo-600" />
                        <h1 className="text-xl font-black italic tracking-tighter">
-                         SI<span className="text-slate-800">PATUH</span> 
+                         <span className="text-indigo-600">SI</span><span className="text-slate-800">PATUH</span> 
                          <span className="text-[10px] text-indigo-500 not-italic ml-1 align-top">v.1.0</span>
                        </h1>
                      </div>
@@ -522,6 +522,7 @@
                        <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
                      </button>
                   </div>
+                  <p className="text-[10px] font-bold text-indigo-400 leading-tight mb-2">Sistem Informasi Pemantauan Alokasi Tepat Undang-Undang HKPD</p>
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Bidang PPA II Kanwil DJPb Provinsi Banten</p>
                 </div>
 
@@ -595,7 +596,7 @@
                           <Menu size={16} />
                         </button>
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 rounded-lg text-[10px] font-black text-indigo-600 uppercase tracking-widest">
-                          <MapIcon size={14} /> Sistem Informasi Pemantauan Alokasi Tepat Undang-Undang HKPD (SIPATUH HKPD)
+                          <MapIcon size={12} /> Dashboard Kepatuhan terhadap UU HKPD
                         </div>
                       </div>
                       <h2 className="text-4xl font-black text-slate-900 tracking-tighter">{selectedRegion}</h2>
