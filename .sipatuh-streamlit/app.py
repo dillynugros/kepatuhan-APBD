@@ -501,7 +501,7 @@ def main():
     st.markdown("<div style='height:2.5rem;'></div>", unsafe_allow_html=True)
 
     # ---- POSTUR APBD ----
-    st.markdown(render_section_title("🗂️", "Postur APBD", f"Pembandingan data aktual per tahun untuk {selected_region}"), unsafe_allow_html=True)
+    st.markdown(render_section_title("🗂️", "Postur APBD", f"Pembandingan data aktual per tahun untuk Pemda {selected_region}"), unsafe_allow_html=True)
   
     df_postur = df_raw[df_raw['pemda'] == selected_region]
     
