@@ -494,9 +494,9 @@ def main():
     ch1, ch2 = st.columns(2)
     
     with ch1:
-        st.plotly_chart(create_chart(region_data, 'tahun', 'rasio_pegawai', 'Tren Belanja Pegawai', 30.0, True), width="stretch", config={'displayModeBar': False})
+        st.plotly_chart(create_chart(region_data, 'tahun', 'rasio_pegawai', 'Rasio Belanja Pegawai', 30.0, True), width="stretch", config={'displayModeBar': False})
     with ch2:
-        st.plotly_chart(create_chart(region_data, 'tahun', 'rasio_modal', 'Tren Belanja Infrastruktur', 40.0, False), width="stretch", config={'displayModeBar': False})
+        st.plotly_chart(create_chart(region_data, 'tahun', 'rasio_modal', 'Proyeksi Rasio Belanja Infrastruktur', 40.0, False), width="stretch", config={'displayModeBar': False})
 
     st.markdown("<div style='height:2.5rem;'></div>", unsafe_allow_html=True)
 
