@@ -215,7 +215,7 @@ def render_kpi_card(title, ratio, limit_val, is_max_limit=True):
     status_bg     = "rgba(16,185,129,0.15)" if is_safe else "rgba(239,68,68,0.12)"
     status_clr    = active_color
     progress      = min(ratio, 100)
-    glow_color    = active_color + "33"  # 20% opacity hex
+    glow_color    = active_color + "33"
 
     return f"""
     <div style="background:{active_bg}; padding:2rem 2rem 1.75rem 2rem; border-radius:2rem; 
@@ -511,16 +511,18 @@ def main():
 
     with ch1:
         st.markdown(f"<div style='{chart_style}'>", unsafe_allow_html=True)
+        # --- PERUBAHAN: width="stretch" ---
         st.plotly_chart(
             create_chart(region_data, 'tahun', 'rasio_pegawai', 'Rasio Belanja Pegawai', 30, True),
-            use_container_width=True, config={'displayModeBar': False}
+            width="stretch", config={'displayModeBar': False}
         )
         st.markdown("</div>", unsafe_allow_html=True)
     with ch2:
         st.markdown(f"<div style='{chart_style}'>", unsafe_allow_html=True)
+        # --- PERUBAHAN: width="stretch" ---
         st.plotly_chart(
             create_chart(region_data, 'tahun', 'rasio_modal', 'Rasio Belanja Modal / Infrastruktur', 40, False),
-            use_container_width=True, config={'displayModeBar': False}
+            width="stretch", config={'displayModeBar': False}
         )
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -563,9 +565,11 @@ def main():
         df_display['GROWTH']                   = df_display['Pertumbuhan'].apply(lambda x: f"{x:+.1f}%")
 
         st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
+        
+        # --- PERUBAHAN: width="stretch" ---
         st.dataframe(
             df_display[['KATEGORI', 'AKUN', f'NILAI {int(year_left)}', f'NILAI {int(year_right)}', 'GROWTH']],
-            use_container_width=True, hide_index=True, height=340
+            width="stretch", hide_index=True, height=340
         )
 
         def convert_df(df):
