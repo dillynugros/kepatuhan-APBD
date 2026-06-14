@@ -483,9 +483,9 @@ def main():
     st.markdown(render_section_title("📐", "Indikator Mandatory Spending UU HKPD", f"Berdasarkan postur anggaran terkini ({latest_thn})"), unsafe_allow_html=True)
     k1, k2 = st.columns(2)
     with k1:
-        st.markdown(render_kpi_card("Rasio Belanja Pegawai {latest_thn}", latest_rasio_pegawai, 30.0, True), unsafe_allow_html=True)
+        st.markdown(render_kpi_card(f"Rasio Belanja Pegawai {latest_thn}", latest_rasio_pegawai, 30.0, True), unsafe_allow_html=True)
     with k2:
-        st.markdown(render_kpi_card("Rasio Belanja Infrastruktur {latest_thn}", latest_rasio_modal, 40.0, False), unsafe_allow_html=True)
+        st.markdown(render_kpi_card(f"Rasio Belanja Infrastruktur {latest_thn}", latest_rasio_modal, 40.0, False), unsafe_allow_html=True)
 
     st.markdown("<div style='height:2.5rem;'></div>", unsafe_allow_html=True)
 
