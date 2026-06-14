@@ -502,7 +502,7 @@ def main():
 
     # ---- POSTUR APBD ----
     st.markdown(f"""
-    <div style="background:#ffffff; padding:2.5rem; border-radius:2rem; border:1px solid #e2e8f0;
+    <div style="background:#ffffff; padding:0.5rem; border-radius:2rem; border:1px solid #e2e8f0;
                 box-shadow:0 4px 20px rgba(0,0,0,0.04);">
         {render_section_title("🗂️", "Postur APBD", f"Pembandingan data aktual per tahun untuk {selected_region}")}
     """, unsafe_allow_html=True)
