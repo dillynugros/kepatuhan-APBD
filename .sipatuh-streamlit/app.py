@@ -167,9 +167,9 @@ st.markdown("""
 # ==========================================
 
 def render_sidebar_header():
-    """Header Logo Premium untuk Sidebar Dark Mode"""
+    """Sidebar premium dengan branding full"""
     st.markdown("""
-        <div style="padding: 0.5rem 1rem 1rem 1rem;">
+        <div style="padding: 1.5rem 1rem 1rem 1rem;">
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:1.5rem;">
                 <div style="width:42px; height:42px; background:linear-gradient(135deg,#6366f1,#818cf8); border-radius:12px;
                             display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
