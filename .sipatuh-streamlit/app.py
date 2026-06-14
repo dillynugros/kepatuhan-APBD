@@ -132,7 +132,6 @@ def render_sidebar_content(list_pemda, selected=None):
     """Sidebar premium dengan branding full"""
     st.markdown("""
         <div style="padding: 2rem 1.25rem 1.5rem 1.25rem;">
-            <!-- LOGO AREA -->
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:1.75rem;">
                 <div style="width:42px; height:42px; background:linear-gradient(135deg,#6366f1,#818cf8); border-radius:12px;
                             display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
@@ -153,10 +152,8 @@ def render_sidebar_content(list_pemda, selected=None):
                 </div>
             </div>
 
-            <!-- DIVIDER -->
             <div style="height:1px; background:linear-gradient(90deg, rgba(99,102,241,0.5), transparent); margin-bottom:1.5rem;"></div>
 
-            <!-- UNIT INFO -->
             <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); 
                          border-radius:14px; padding:1rem 1.1rem; margin-bottom:1.75rem; backdrop-filter:blur(10px);">
                 <p style="font-size:8px; font-weight:900; color:#6366f1 !important; text-transform:uppercase; 
@@ -167,7 +164,6 @@ def render_sidebar_content(list_pemda, selected=None):
                 </p>
             </div>
 
-            <!-- LABEL PILIH PEMDA -->
             <p style="font-size:9px; font-weight:900; color:#6366f1 !important; text-transform:uppercase; 
                        letter-spacing:0.12em; margin:0 0 8px 0;">📍 Pilih Pemerintah Daerah</p>
         </div>
@@ -226,15 +222,12 @@ def render_kpi_card(title, ratio, limit_val, is_max_limit=True):
                 border:1.5px solid {active_border}; position:relative; overflow:hidden; 
                 box-shadow: 0 8px 24px {glow_color}, 0 2px 6px rgba(0,0,0,0.04);
                 transition: transform 0.2s;">
-        <!-- Accent bar kiri -->
         <div style="position:absolute; top:0; left:0; width:6px; height:100%; 
                     background:linear-gradient(180deg, {active_color}, {active_color}88);"></div>
-        <!-- Lingkaran dekoratif -->
         <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; 
                     border-radius:50%; background:{active_color}0d;"></div>
 
         <div style="padding-left:12px;">
-            <!-- Baris atas: judul + badge status -->
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
                 <h4 style="font-size:0.7rem; font-weight:900; color:#475569; text-transform:uppercase; 
                             margin:0; letter-spacing:0.1em;">{title}</h4>
@@ -243,14 +236,12 @@ def render_kpi_card(title, ratio, limit_val, is_max_limit=True):
                              text-transform:uppercase; letter-spacing:0.08em;">{status_label}</span>
             </div>
 
-            <!-- Angka besar -->
             <div style="display:flex; align-items:baseline; gap:6px; margin-bottom:1.25rem;">
                 <span style="font-size:3.5rem; font-weight:900; color:#0f172a; 
                              letter-spacing:-0.05em; line-height:1;">{ratio:.1f}%</span>
                 <span style="font-size:0.75rem; font-weight:700; color:#94a3b8;">/ {limit_text}</span>
             </div>
 
-            <!-- Progress bar -->
             <div style="width:100%; background:rgba(255,255,255,0.6); height:10px; 
                          border-radius:9999px; overflow:hidden;">
                 <div style="height:100%; background:linear-gradient(90deg,{active_color},{active_color}cc); 
@@ -444,7 +435,7 @@ def main():
         st.markdown("""
                 <div style="margin-top:auto; padding-top:2rem;">
                     <p style="font-size:8px; color:#334155 !important; text-align:center; font-weight:600;">
-                        © 2025 Kanwil DJPb Provinsi Banten
+                        © 2026 Kanwil DJPb Provinsi Banten
                     </p>
                 </div>
             </div>
@@ -459,8 +450,9 @@ def main():
 
     cagr = 0
     if initial_data['total_belanja_t'] > 0 and len(region_data) > 1:
-        n    = latest_data['tahun'] - initial_data['tahun']
-        cagr = ((latest_data['total_belanja_t'] / initial_data['total_belanja_t']) ** (1/n) - 1) * 100
+        n = latest_data['tahun'] - initial_data['tahun']
+        if n > 0:  # PERBAIKAN: Mencegah ZeroDivisionError
+            cagr = ((latest_data['total_belanja_t'] / initial_data['total_belanja_t']) ** (1/n) - 1) * 100
 
     # ---- HEADER BADGE ----
     st.markdown("""
