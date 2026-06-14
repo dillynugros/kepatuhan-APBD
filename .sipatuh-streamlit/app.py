@@ -132,6 +132,7 @@ def render_sidebar_content(list_pemda, selected=None):
     """Sidebar premium dengan branding full"""
     st.markdown("""
         <div style="padding: 2rem 1.25rem 1.5rem 1.25rem;">
+            <!-- LOGO AREA -->
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:1.75rem;">
                 <div style="width:42px; height:42px; background:linear-gradient(135deg,#6366f1,#818cf8); border-radius:12px;
                             display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
@@ -152,8 +153,10 @@ def render_sidebar_content(list_pemda, selected=None):
                 </div>
             </div>
 
+            <!-- DIVIDER -->
             <div style="height:1px; background:linear-gradient(90deg, rgba(99,102,241,0.5), transparent); margin-bottom:1.5rem;"></div>
 
+            <!-- UNIT INFO -->
             <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); 
                          border-radius:14px; padding:1rem 1.1rem; margin-bottom:1.75rem; backdrop-filter:blur(10px);">
                 <p style="font-size:8px; font-weight:900; color:#6366f1 !important; text-transform:uppercase; 
@@ -164,6 +167,7 @@ def render_sidebar_content(list_pemda, selected=None):
                 </p>
             </div>
 
+            <!-- LABEL PILIH PEMDA -->
             <p style="font-size:9px; font-weight:900; color:#6366f1 !important; text-transform:uppercase; 
                        letter-spacing:0.12em; margin:0 0 8px 0;">📍 Pilih Pemerintah Daerah</p>
         </div>
@@ -189,30 +193,36 @@ def render_header_metric(title, value, subtitle="", is_cagr=False):
 
 
 def render_kpi_card(title, ratio, limit_val, is_max_limit=True):
+    # Penentuan Warna Berdasarkan Tipe Batasan (Max/Min)
     if is_max_limit:
         is_safe = ratio <= limit_val
-        safe_color  = "#10b981"
-        danger_color = "#ef4444"
+        safe_color  = "#10b981" # Emerald
+        danger_color = "#ef4444" # Rose/Red
         limit_text  = f"Max {limit_val:.0f}%"
         safe_bg     = "linear-gradient(135deg,#ecfdf5,#d1fae5)"
         danger_bg   = "linear-gradient(135deg,#fff1f2,#ffe4e6)"
         safe_border = "#a7f3d0"
         danger_border = "#fecaca"
+        safe_badge_bg = "rgba(16,185,129,0.15)"
+        danger_badge_bg = "rgba(239,68,68,0.15)"
     else:
         is_safe = ratio >= limit_val
-        safe_color  = "#4f46e5"
-        danger_color = "#f59e0b"
+        safe_color  = "#4f46e5" # Indigo
+        danger_color = "#f59e0b" # Amber/Yellow
         limit_text  = f"Min {limit_val:.0f}%"
         safe_bg     = "linear-gradient(135deg,#eef2ff,#e0e7ff)"
         danger_bg   = "linear-gradient(135deg,#fffbeb,#fef3c7)"
         safe_border = "#c7d2fe"
         danger_border = "#fde68a"
+        safe_badge_bg = "rgba(79,70,229,0.15)"
+        danger_badge_bg = "rgba(245,158,11,0.15)"
 
+    # Penerapan Variabel
     active_color  = safe_color  if is_safe else danger_color
     active_bg     = safe_bg     if is_safe else danger_bg
     active_border = safe_border if is_safe else danger_border
     status_label  = "PATUH ✓" if is_safe else "PERHATIAN !"
-    status_bg     = "rgba(16,185,129,0.15)" if is_safe else "rgba(239,68,68,0.12)"
+    status_bg     = safe_badge_bg if is_safe else danger_badge_bg
     status_clr    = active_color
     progress      = min(ratio, 100)
     glow_color    = active_color + "33"
@@ -222,12 +232,15 @@ def render_kpi_card(title, ratio, limit_val, is_max_limit=True):
                 border:1.5px solid {active_border}; position:relative; overflow:hidden; 
                 box-shadow: 0 8px 24px {glow_color}, 0 2px 6px rgba(0,0,0,0.04);
                 transition: transform 0.2s;">
+        <!-- Accent bar kiri -->
         <div style="position:absolute; top:0; left:0; width:6px; height:100%; 
                     background:linear-gradient(180deg, {active_color}, {active_color}88);"></div>
+        <!-- Lingkaran dekoratif -->
         <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; 
                     border-radius:50%; background:{active_color}0d;"></div>
 
         <div style="padding-left:12px;">
+            <!-- Baris atas: judul + badge status -->
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
                 <h4 style="font-size:0.7rem; font-weight:900; color:#475569; text-transform:uppercase; 
                             margin:0; letter-spacing:0.1em;">{title}</h4>
@@ -236,16 +249,18 @@ def render_kpi_card(title, ratio, limit_val, is_max_limit=True):
                              text-transform:uppercase; letter-spacing:0.08em;">{status_label}</span>
             </div>
 
+            <!-- Angka besar -->
             <div style="display:flex; align-items:baseline; gap:6px; margin-bottom:1.25rem;">
                 <span style="font-size:3.5rem; font-weight:900; color:#0f172a; 
                              letter-spacing:-0.05em; line-height:1;">{ratio:.1f}%</span>
                 <span style="font-size:0.75rem; font-weight:700; color:#94a3b8;">/ {limit_text}</span>
             </div>
 
+            <!-- Progress bar -->
             <div style="width:100%; background:rgba(255,255,255,0.6); height:10px; 
                          border-radius:9999px; overflow:hidden;">
                 <div style="height:100%; background:linear-gradient(90deg,{active_color},{active_color}cc); 
-                             width:{progress}%; border-radius:9999px;
+                             width:{progress:.1f}%; border-radius:9999px;
                              box-shadow: 0 0 8px {active_color}66;"></div>
             </div>
         </div>
@@ -511,7 +526,6 @@ def main():
 
     with ch1:
         st.markdown(f"<div style='{chart_style}'>", unsafe_allow_html=True)
-        # --- PERUBAHAN: width="stretch" ---
         st.plotly_chart(
             create_chart(region_data, 'tahun', 'rasio_pegawai', 'Rasio Belanja Pegawai', 30, True),
             width="stretch", config={'displayModeBar': False}
@@ -519,7 +533,6 @@ def main():
         st.markdown("</div>", unsafe_allow_html=True)
     with ch2:
         st.markdown(f"<div style='{chart_style}'>", unsafe_allow_html=True)
-        # --- PERUBAHAN: width="stretch" ---
         st.plotly_chart(
             create_chart(region_data, 'tahun', 'rasio_modal', 'Rasio Belanja Modal / Infrastruktur', 40, False),
             width="stretch", config={'displayModeBar': False}
@@ -565,8 +578,6 @@ def main():
         df_display['GROWTH']                   = df_display['Pertumbuhan'].apply(lambda x: f"{x:+.1f}%")
 
         st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
-        
-        # --- PERUBAHAN: width="stretch" ---
         st.dataframe(
             df_display[['KATEGORI', 'AKUN', f'NILAI {int(year_left)}', f'NILAI {int(year_right)}', 'GROWTH']],
             width="stretch", hide_index=True, height=340
