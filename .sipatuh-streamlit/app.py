@@ -49,7 +49,7 @@ st.markdown("""
         border-radius: 12px;
         border: 1px solid transparent;
         background-color: transparent;
-        color: #94a3b8 !important; /* Warna teks tidak aktif (abu-abu terang) */
+        color: #94a3b8 !important; 
         font-weight: 600;
         transition: all 0.2s ease-in-out;
     }
@@ -72,7 +72,7 @@ st.markdown("""
     
     /* Hover pada Tombol Aktif */
     [data-testid="stSidebar"] [data-testid="stButton"] button[kind="primary"]:hover {
-        transform: none; /* Nonaktifkan efek geser saat sudah aktif */
+        transform: none; 
         box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6) !important;
     }
 
@@ -411,15 +411,29 @@ def main():
     # ---- DATA UNTUK REGION ----
     region_data  = df_summary[df_summary['pemda'] == selected_region].sort_values('tahun')
     if region_data.empty: return
-    latest_data  = region_data.iloc[-1]
-    initial_data = region_data.iloc[0]
+    
+    # -------------------------------------------------------------
+    # PERBAIKAN FATAL ERROR: "Ambiguous Series"
+    # Menggunakan Numpy mentah agar terhindar dari bug Index Pandas
+    # -------------------------------------------------------------
+    tb_array = region_data['total_belanja_t'].to_numpy()
+    thn_array = region_data['tahun'].to_numpy()
+    pegawai_array = region_data['rasio_pegawai'].to_numpy()
+    modal_array = region_data['rasio_modal'].to_numpy()
+
+    initial_tb = float(tb_array[0])
+    latest_tb = float(tb_array[-1])
+    initial_thn = int(thn_array[0])
+    latest_thn = int(thn_array[-1])
+    latest_rasio_pegawai = float(pegawai_array[-1])
+    latest_rasio_modal = float(modal_array[-1])
 
     # Kalkulasi CAGR dengan Proteksi ZeroDivisionError
     cagr = 0
-    if initial_data['total_belanja_t'] > 0 and len(region_data) > 1:
-        n = latest_data['tahun'] - initial_data['tahun']
+    if initial_tb > 0 and len(region_data) > 1:
+        n = latest_thn - initial_thn
         if n > 0:
-            cagr = ((latest_data['total_belanja_t'] / initial_data['total_belanja_t']) ** (1/n) - 1) * 100
+            cagr = ((latest_tb / initial_tb) ** (1/n) - 1) * 100
 
     # ---- HEADER BADGE ----
     st.markdown("""
@@ -441,14 +455,14 @@ def main():
                         letter-spacing:-0.05em; line-height:1;">{selected_region}</h2>
             <p style="color:#64748b; font-size:12px; font-weight:700; text-transform:uppercase; 
                        letter-spacing:0.05em; margin:12px 0 0 0;">
-                📅 Periode Data: {int(initial_data['tahun'])} – {int(latest_data['tahun'])}
+                📅 Periode Data: {initial_thn} – {latest_thn}
             </p>
         </div>
         """, unsafe_allow_html=True)
     with c2:
         st.markdown(render_header_metric(
-            f"Total Belanja {int(latest_data['tahun'])}",
-            f"Rp {latest_data['total_belanja_t']:.2f}", "Triliun"
+            f"Total Belanja {latest_thn}",
+            f"Rp {latest_tb:.2f}", "Triliun"
         ), unsafe_allow_html=True)
     with c3:
         st.markdown(render_header_metric(
@@ -458,12 +472,12 @@ def main():
     st.markdown("<div style='height:2.5rem;'></div>", unsafe_allow_html=True)
 
     # ---- KPI CARDS ----
-    st.markdown(render_section_title("📐", "Indikator Mandatory Spending", f"Berdasarkan postur anggaran terkini ({int(latest_data['tahun'])})"), unsafe_allow_html=True)
+    st.markdown(render_section_title("📐", "Indikator Mandatory Spending", f"Berdasarkan postur anggaran terkini ({latest_thn})"), unsafe_allow_html=True)
     k1, k2 = st.columns(2)
     with k1:
-        st.markdown(render_kpi_card("Rasio Belanja Pegawai", latest_data['rasio_pegawai'], 30.0, True), unsafe_allow_html=True)
+        st.markdown(render_kpi_card("Rasio Belanja Pegawai", latest_rasio_pegawai, 30.0, True), unsafe_allow_html=True)
     with k2:
-        st.markdown(render_kpi_card("Rasio Belanja Infrastruktur", latest_data['rasio_modal'], 40.0, False), unsafe_allow_html=True)
+        st.markdown(render_kpi_card("Rasio Belanja Infrastruktur", latest_rasio_modal, 40.0, False), unsafe_allow_html=True)
 
     st.markdown("<div style='height:2.5rem;'></div>", unsafe_allow_html=True)
 
