@@ -8,7 +8,7 @@ from io import BytesIO
 # 1. KONFIGURASI HALAMAN
 # ==========================================
 st.set_page_config(
-    page_title="SIPATUH · Dashboard Kepatuhan Fiskal",
+    page_title="SIPATUH HKPD",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
