@@ -487,7 +487,7 @@ def main():
     with k2:
         st.markdown(render_kpi_card("Rasio Belanja Infrastruktur", latest_rasio_modal, 40.0, False), unsafe_allow_html=True)
 
-    st.markdown("<div style='height:4rem;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:1.5rem;'></div>", unsafe_allow_html=True)
 
     # ---- CHARTS ----
     st.markdown(render_section_title("📈", "Tren Historis Kepatuhan", "Perkembangan alokasi antar-tahun"), unsafe_allow_html=True)
