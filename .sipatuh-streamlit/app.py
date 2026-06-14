@@ -480,7 +480,7 @@ def main():
     st.markdown("<div style='height:2.5rem;'></div>", unsafe_allow_html=True)
 
     # ---- KPI CARDS ----
-    st.markdown(render_section_title("📐", "Indikator Mandatory Spending", f"Berdasarkan postur anggaran terkini ({latest_thn})"), unsafe_allow_html=True)
+    st.markdown(render_section_title("📐", "Indikator Mandatory Spending UU HKPD", f"Berdasarkan postur anggaran terkini ({latest_thn})"), unsafe_allow_html=True)
     k1, k2 = st.columns(2)
     with k1:
         st.markdown(render_kpi_card("Rasio Belanja Pegawai", latest_rasio_pegawai, 30.0, True), unsafe_allow_html=True)
@@ -490,7 +490,7 @@ def main():
     st.markdown("<div style='height:2.5rem;'></div>", unsafe_allow_html=True)
 
     # ---- CHARTS ----
-    st.markdown(render_section_title("📈", "Tren Historis Kepatuhan", "Perkembangan alokasi dari waktu ke waktu"), unsafe_allow_html=True)
+    st.markdown(render_section_title("📈", "Tren Historis Kepatuhan", "Perkembangan alokasi antar-tahun"), unsafe_allow_html=True)
     ch1, ch2 = st.columns(2)
     
     with ch1:
@@ -504,7 +504,7 @@ def main():
     st.markdown(f"""
     <div style="background:#ffffff; padding:2.5rem; border-radius:2rem; border:1px solid #e2e8f0;
                 box-shadow:0 4px 20px rgba(0,0,0,0.04);">
-        {render_section_title("🗂️", "Analisis Komparasi Postur", f"Pembandingan data aktual per tahun untuk {selected_region}")}
+        {render_section_title("🗂️", "Postur APBD", f"Pembandingan data aktual per tahun untuk {selected_region}")}
     """, unsafe_allow_html=True)
 
     df_postur = df_raw[df_raw['pemda'] == selected_region]
@@ -515,10 +515,10 @@ def main():
     if len(tahun_opts) >= 2:
         col_t1, col_t2, col_spacer = st.columns([1.5, 1.5, 5])
         with col_t1:
-            st.markdown('<p class="postur-label">📅 Tahun Pembanding (Awal)</p>', unsafe_allow_html=True)
+            st.markdown('<p class="postur-label">📅 Tahun Awal</p>', unsafe_allow_html=True)
             year_left = st.selectbox("Tahun Awal", options=tahun_opts, index=max(0, len(tahun_opts)-2), key="yl", label_visibility="collapsed")
         with col_t2:
-            st.markdown('<p class="postur-label">📅 Tahun Komparasi (Akhir)</p>', unsafe_allow_html=True)
+            st.markdown('<p class="postur-label">📅 Tahun Akhir</p>', unsafe_allow_html=True)
             year_right = st.selectbox("Tahun Akhir", options=tahun_opts, index=max(0, len(tahun_opts)-1), key="yr", label_visibility="collapsed")
 
         if year_left and year_right:
