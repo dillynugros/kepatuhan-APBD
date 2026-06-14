@@ -184,11 +184,6 @@ def render_sidebar_header():
                     </p>
                 </div>
             </div>
-            
-            <div style="height:1px; background:linear-gradient(90deg, rgba(99,102,241,0.5), transparent); margin-bottom:1.5rem;"></div>
-            
-            <p style="font-size:9px; font-weight:900; color:#6366f1; text-transform:uppercase; 
-                       letter-spacing:0.12em; margin:0 0 10px 4px;">📍 Daftar Entitas Pemda</p>
         </div>
     """, unsafe_allow_html=True)
 
