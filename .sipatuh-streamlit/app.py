@@ -54,14 +54,12 @@ st.markdown("""
         transition: all 0.2s ease-in-out;
     }
     
-    /* Efek Hover Tombol Biasa */
     [data-testid="stSidebar"] [data-testid="stButton"] button:hover {
         background-color: rgba(255, 255, 255, 0.05);
         color: #f8fafc !important;
         transform: translateX(4px);
     }
     
-    /* Tombol Aktif (Primary) */
     [data-testid="stSidebar"] [data-testid="stButton"] button[kind="primary"] {
         background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
         color: #ffffff !important;
@@ -70,22 +68,48 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4) !important;
     }
     
-    /* Hover pada Tombol Aktif */
     [data-testid="stSidebar"] [data-testid="stButton"] button[kind="primary"]:hover {
         transform: none; 
         box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6) !important;
     }
 
+    /* ---- KONTROL HEADER & TOMBOL HIDE/SHOW SIDEBAR ---- */
+    /* Menampilkan kembali header tapi transparan */
+    header { background: transparent !important; }
+    
+    /* Sembunyikan tombol Deploy, titik tiga (Menu) di kanan atas */
+    [data-testid="stHeaderActionElements"] { display: none !important; }
+
+    /* Gaya Tombol BUKA Sidebar (Saat tertutup) */
+    [data-testid="collapsedControl"] button {
+        background-color: #ef4444 !important; /* Warna merah kontras */
+        color: #ffffff !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4) !important;
+        transition: all 0.2s ease !important;
+    }
+    [data-testid="collapsedControl"] button:hover {
+        background-color: #dc2626 !important;
+        transform: scale(1.05);
+    }
+
+    /* Gaya Tombol TUTUP Sidebar (Saat terbuka) */
+    [data-testid="stSidebarHeader"] button {
+        background-color: #ef4444 !important; /* Warna merah kontras */
+        color: #ffffff !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4) !important;
+    }
+    [data-testid="stSidebarHeader"] button:hover {
+        background-color: #dc2626 !important;
+    }
+
     /* ---- MAIN CONTENT ---- */
     .block-container {
-        padding-top: 2.5rem !important;
+        padding-top: 1rem !important;
         padding-bottom: 3rem !important;
         max-width: 1150px !important;
     }
-
-    header { visibility: hidden; }
-    footer { visibility: hidden; }
-    #MainMenu { visibility: hidden; }
 
     /* ---- SELECTBOX di main (Postur APBD) ---- */
     div[data-baseweb="select"] > div {
@@ -128,11 +152,11 @@ st.markdown("""
 
     /* ---- GRAFIK (PLOTLY) BACKGROUND ---- */
     [data-testid="stPlotlyChart"] {
-        background-color: #ffffff;
-        padding: 1.5rem;
         border-radius: 1.75rem;
         border: 1px solid #e2e8f0;
         box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        overflow: hidden;
+        background-color: #ffffff;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -145,7 +169,7 @@ st.markdown("""
 def render_sidebar_header():
     """Header Logo Premium untuk Sidebar Dark Mode"""
     st.markdown("""
-        <div style="padding: 1.5rem 1rem 1rem 1rem;">
+        <div style="padding: 0.5rem 1rem 1rem 1rem;">
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:1.5rem;">
                 <div style="width:42px; height:42px; background:linear-gradient(135deg,#6366f1,#818cf8); border-radius:12px;
                             display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
@@ -186,7 +210,6 @@ def render_header_metric(title, value, subtitle="", is_cagr=False):
     """
 
 def render_kpi_card(title, ratio, limit_val, is_max_limit=True):
-    # Memastikan nilai masuk sebagai float murni
     ratio = float(ratio)
     limit_val = float(limit_val)
     
@@ -257,7 +280,6 @@ def load_data():
         return pd.DataFrame()
 
     df.columns = df.columns.str.strip().str.lower()
-    
     df = df.loc[:, ~df.columns.duplicated()]
 
     if 'provinsi' in df.columns and 'pemda' not in df.columns:
@@ -301,7 +323,7 @@ def process_apbd_data(df):
     return summary
 
 # ==========================================
-# 5. CHART PLOTLY
+# 5. CHART PLOTLY (KOMPOSISI DIPERBAIKI)
 # ==========================================
 def create_chart(data, x_col, y_col, title, threshold, is_max_limit=True):
     fig = go.Figure()
@@ -346,13 +368,18 @@ def create_chart(data, x_col, y_col, title, threshold, is_max_limit=True):
     max_y = float(val_array.max()) if len(val_array) > 0 else 0.0
     y_range = max(max_y * 1.3, threshold * 1.4)
 
+    # PERBAIKAN KOMPOSISI: Plotly Margin & Title Position
     fig.update_layout(
-        title=dict(text=f"<span style='font-size:11px; font-weight:900; color:#94a3b8; text-transform:uppercase; letter-spacing:0.1em;'>{title}</span>", y=0.95, x=0.02, xanchor='left', yanchor='top'),
-        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=0, r=20, t=50, b=10),
-        xaxis=dict(showgrid=False, tickfont=dict(family="Inter", size=11, color="#cbd5e1", weight="bold"), showline=False, zeroline=False),
-        yaxis=dict(showgrid=True, gridcolor='#f1f5f9', gridwidth=1, tickfont=dict(family="Inter", size=11, color="#cbd5e1", weight="bold"), range=[0, y_range], zeroline=False),
-        height=280, showlegend=False,
+        title=dict(
+            text=f"<span style='font-size:13px; font-weight:900; color:#1e293b; text-transform:uppercase; letter-spacing:0.05em;'>{title}</span>", 
+            y=0.98, x=0.03, xanchor='left', yanchor='top'
+        ),
+        plot_bgcolor='#ffffff', 
+        paper_bgcolor='#ffffff',
+        margin=dict(l=15, r=20, t=65, b=20), # Margin atas ditambahkan agar judul tidak terjepit
+        xaxis=dict(showgrid=False, tickfont=dict(family="Inter", size=11, color="#94a3b8", weight="bold"), showline=False, zeroline=False),
+        yaxis=dict(showgrid=True, gridcolor='#f1f5f9', gridwidth=1, tickfont=dict(family="Inter", size=11, color="#94a3b8", weight="bold"), range=[0, y_range], zeroline=False),
+        height=300, showlegend=False,
         hoverlabel=dict(bgcolor='#1e293b', bordercolor='#334155', font=dict(family='Inter', size=12, color='#f8fafc'))
     )
     return fig
@@ -375,7 +402,6 @@ def main():
         st.error("Data daerah tidak ditemukan.")
         return
 
-    # Inisialisasi Session State
     if 'selected_pemda' not in st.session_state:
         st.session_state.selected_pemda = list_pemda[0]
 
