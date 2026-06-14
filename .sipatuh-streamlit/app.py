@@ -189,7 +189,8 @@ def create_perfect_chart(data, x_col, y_col, title, threshold, is_max_limit=True
         marker=dict(size=12, color='#ffffff', line=dict(width=3, color=main_color)),
         text=data[y_col].round(1).astype(str) + '%',
         textposition="top center",
-        textfont=dict(size=11, color=main_color, family="Inter", weight="900"),
+        # PERBAIKAN: Menggunakan "bold" atau angka 900 tanpa tanda kutip
+        textfont=dict(size=11, color=main_color, family="Inter", weight="bold"),
         hoverinfo='skip'
     ))
     
