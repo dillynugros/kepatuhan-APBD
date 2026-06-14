@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. INJEKSI CSS PREMIUM
+# 2. INJEKSI CSS PREMIUM & CUSTOM BUTTON SIDEBAR
 # ==========================================
 st.markdown("""
 <style>
@@ -25,10 +25,12 @@ st.markdown("""
         font-family: 'Inter', ui-sans-serif, system-ui, sans-serif !important;
     }
 
+    /* Background Utama */
     [data-testid="stAppViewContainer"] {
         background: linear-gradient(135deg, #f0f4ff 0%, #f8fafc 50%, #faf5ff 100%);
     }
 
+    /* ---- SIDEBAR DARK PREMIUM ---- */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 60%, #0f172a 100%);
         border-right: none !important;
@@ -38,6 +40,7 @@ st.markdown("""
         gap: 0 !important;
     }
 
+    /* ---- CUSTOM STYLE: TOMBOL LIST SIDEBAR ---- */
     [data-testid="stSidebar"] [data-testid="stButton"] button {
         width: 100%;
         justify-content: flex-start;
@@ -51,12 +54,14 @@ st.markdown("""
         transition: all 0.2s ease-in-out;
     }
     
+    /* Efek Hover Tombol Biasa */
     [data-testid="stSidebar"] [data-testid="stButton"] button:hover {
         background-color: rgba(255, 255, 255, 0.05);
         color: #f8fafc !important;
         transform: translateX(4px);
     }
     
+    /* Tombol Aktif (Primary) */
     [data-testid="stSidebar"] [data-testid="stButton"] button[kind="primary"] {
         background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
         color: #ffffff !important;
@@ -65,11 +70,13 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4) !important;
     }
     
+    /* Hover pada Tombol Aktif */
     [data-testid="stSidebar"] [data-testid="stButton"] button[kind="primary"]:hover {
         transform: none; 
         box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6) !important;
     }
 
+    /* ---- MAIN CONTENT ---- */
     .block-container {
         padding-top: 2.5rem !important;
         padding-bottom: 3rem !important;
@@ -80,6 +87,7 @@ st.markdown("""
     footer { visibility: hidden; }
     #MainMenu { visibility: hidden; }
 
+    /* ---- SELECTBOX di main (Postur APBD) ---- */
     div[data-baseweb="select"] > div {
         border-radius: 12px;
         border-color: #e2e8f0;
@@ -89,6 +97,7 @@ st.markdown("""
         box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
 
+    /* ---- DATAFRAME ---- */
     [data-testid="stDataFrame"] {
         border-radius: 1.25rem;
         overflow: hidden;
@@ -100,6 +109,7 @@ st.markdown("""
         border: 1px solid #e2e8f0 !important;
     }
 
+    /* ---- DOWNLOAD BUTTON ---- */
     [data-testid="stDownloadButton"] button {
         background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
         color: white !important;
@@ -115,14 +125,25 @@ st.markdown("""
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 20px rgba(79,70,229,0.45) !important;
     }
+
+    /* ---- GRAFIK (PLOTLY) BACKGROUND ---- */
+    [data-testid="stPlotlyChart"] {
+        background-color: #ffffff;
+        padding: 1.5rem;
+        border-radius: 1.75rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
 </style>
 """, unsafe_allow_html=True)
 
 
 # ==========================================
-# 3. KOMPONEN UI KUSTOM
+# 3. KOMPONEN UI KUSTOM (HTML)
 # ==========================================
+
 def render_sidebar_header():
+    """Header Logo Premium untuk Sidebar Dark Mode"""
     st.markdown("""
         <div style="padding: 1.5rem 1rem 1rem 1rem;">
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:1.5rem;">
@@ -139,7 +160,9 @@ def render_sidebar_header():
                     </p>
                 </div>
             </div>
+            
             <div style="height:1px; background:linear-gradient(90deg, rgba(99,102,241,0.5), transparent); margin-bottom:1.5rem;"></div>
+            
             <p style="font-size:9px; font-weight:900; color:#6366f1; text-transform:uppercase; 
                        letter-spacing:0.12em; margin:0 0 10px 4px;">📍 Daftar Entitas Pemda</p>
         </div>
@@ -235,7 +258,6 @@ def load_data():
 
     df.columns = df.columns.str.strip().str.lower()
     
-    # PERBAIKAN 1: Memaksa pembuangan kolom duplikat yang tidak terlihat dari Google Sheets
     df = df.loc[:, ~df.columns.duplicated()]
 
     if 'provinsi' in df.columns and 'pemda' not in df.columns:
@@ -284,8 +306,6 @@ def process_apbd_data(df):
 def create_chart(data, x_col, y_col, title, threshold, is_max_limit=True):
     fig = go.Figure()
     
-    # PERBAIKAN 2: Mencegah error "Truth value of a Series is ambiguous" 
-    # dengan merubah data Pandas ke format angka dasar Python (float murni).
     val_array = data[y_col].to_numpy()
     latest_val = float(val_array[-1]) if len(val_array) > 0 else 0.0
     threshold = float(threshold)
@@ -302,7 +322,6 @@ def create_chart(data, x_col, y_col, title, threshold, is_max_limit=True):
         mode='lines', line=dict(width=0), fill='tozeroy', fillcolor=fill_color, hoverinfo='skip', showlegend=False
     ))
 
-    # Gunakan formatting string manual agar aman dari evaluasi Pandas
     text_labels = [f"{float(v):.1f}%" for v in val_array]
 
     fig.add_trace(go.Scatter(
@@ -324,7 +343,6 @@ def create_chart(data, x_col, y_col, title, threshold, is_max_limit=True):
         annotation_font=dict(size=10, color=threshold_color, family="Inter", weight="bold")
     )
 
-    # PERBAIKAN 3: Kalkulasi sumbu Y dengan angka murni (float)
     max_y = float(val_array.max()) if len(val_array) > 0 else 0.0
     y_range = max(max_y * 1.3, threshold * 1.4)
 
@@ -386,7 +404,6 @@ def main():
     region_data  = df_summary[df_summary['pemda'] == selected_region].sort_values('tahun')
     if region_data.empty: return
 
-    # PERBAIKAN 4: Ekstraksi Data Aman (Ubah semuanya ke Array Numpy lalu ke Native Type Python)
     tb_array = region_data['total_belanja_t'].to_numpy()
     thn_array = region_data['tahun'].to_numpy()
     peg_array = region_data['rasio_pegawai'].to_numpy()
@@ -399,7 +416,6 @@ def main():
     latest_rasio_pegawai = float(peg_array[-1])
     latest_rasio_modal = float(mod_array[-1])
 
-    # Kalkulasi CAGR dengan Proteksi Aman
     cagr = 0.0
     if initial_tb > 0 and len(region_data) > 1:
         n = latest_thn - initial_thn
@@ -455,16 +471,11 @@ def main():
     # ---- CHARTS ----
     st.markdown(render_section_title("📈", "Tren Historis Kepatuhan", "Perkembangan alokasi dari waktu ke waktu"), unsafe_allow_html=True)
     ch1, ch2 = st.columns(2)
-    chart_style = "background:#ffffff; padding:1.5rem; border-radius:1.75rem; border:1px solid #e2e8f0; box-shadow:0 4px 20px rgba(0,0,0,0.04);"
-
+    
     with ch1:
-        st.markdown(f"<div style='{chart_style}'>", unsafe_allow_html=True)
         st.plotly_chart(create_chart(region_data, 'tahun', 'rasio_pegawai', 'Tren Belanja Pegawai', 30.0, True), width="stretch", config={'displayModeBar': False})
-        st.markdown("</div>", unsafe_allow_html=True)
     with ch2:
-        st.markdown(f"<div style='{chart_style}'>", unsafe_allow_html=True)
         st.plotly_chart(create_chart(region_data, 'tahun', 'rasio_modal', 'Tren Belanja Infrastruktur', 40.0, False), width="stretch", config={'displayModeBar': False})
-        st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("<div style='height:2.5rem;'></div>", unsafe_allow_html=True)
 
@@ -477,7 +488,6 @@ def main():
 
     df_postur = df_raw[df_raw['pemda'] == selected_region]
     
-    # Amankan Array Tahun untuk Selectbox
     tahun_array = df_postur['tahun'].dropna().unique()
     tahun_opts = sorted([int(x) for x in tahun_array])
 
@@ -522,6 +532,18 @@ def main():
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
         st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="margin-top:3rem; padding:1.5rem 0; border-top:1px solid #e2e8f0; 
+                display:flex; justify-content:space-between; align-items:center;">
+        <p style="font-size:11px; color:#94a3b8; font-weight:600; margin:0;">
+            <span style="font-weight:900; color:#6366f1;">SIPATUH</span> · Sistem Informasi Pemantauan Alokasi Tepat UU HKPD
+        </p>
+        <p style="font-size:10px; color:#cbd5e1; font-weight:600; margin:0;">
+            Bidang PPA II · Kanwil DJPb Provinsi Banten · v1.0
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
