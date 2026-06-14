@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Injeksi CSS Tingkat Lanjut (Meniru Tailwind)
+# Injeksi CSS Tingkat Lanjut (Meniru Tailwind & Kustomisasi Tombol Sidebar)
 st.markdown("""
 <style>
     /* Import Google Font (Inter) */
@@ -39,22 +39,13 @@ st.markdown("""
     .block-container {
         padding-top: 2rem !important;
         padding-bottom: 2rem !important;
-        max-width: 1100px !important; /* Membatasi lebar agar persis seperti max-w-5xl di HTML */
+        max-width: 1100px !important; 
     }
 
     /* Menyembunyikan Elemen Header/Footer Bawaan */
     header {visibility: hidden;}
     footer {visibility: hidden;}
     #MainMenu {visibility: hidden;}
-
-    /* Kustomisasi Selectbox (Dropdown) Streamlit */
-    div[data-baseweb="select"] > div {
-        border-radius: 12px;
-        border-color: #e2e8f0;
-        background-color: #ffffff;
-        font-weight: 600;
-        color: #1e293b;
-    }
     
     /* Kustomisasi DataFrame Streamlit */
     [data-testid="stDataFrame"] {
@@ -63,6 +54,40 @@ st.markdown("""
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         overflow: hidden;
     }
+
+    /* =========================================
+       CUSTOM CSS UNTUK MENU LIST DI SIDEBAR
+       ========================================= */
+    [data-testid="stSidebar"] [data-testid="stButton"] button {
+        width: 100%;
+        justify-content: flex-start; /* Membuat teks rata kiri */
+        padding: 0.6rem 1rem;
+        border-radius: 12px;
+        border: none;
+        background-color: transparent;
+        color: #64748b;
+        font-weight: 600;
+        transition: all 0.2s ease-in-out;
+    }
+    
+    /* Efek Hover (Saat Disorot Mouse) */
+    [data-testid="stSidebar"] [data-testid="stButton"] button:hover {
+        background-color: #f1f5f9;
+        color: #1e293b;
+    }
+    
+    /* Tombol Aktif (Terpilih/Primary) */
+    [data-testid="stSidebar"] [data-testid="stButton"] button[kind="primary"] {
+        background-color: #4f46e5 !important;
+        color: #ffffff !important;
+        font-weight: 800;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3) !important;
+    }
+    
+    /* Hover pada Tombol Aktif */
+    [data-testid="stSidebar"] [data-testid="stButton"] button[kind="primary"]:hover {
+        background-color: #4338ca !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -70,7 +95,6 @@ st.markdown("""
 # 2. KOMPONEN UI KUSTOM (HTML/CSS)
 # ==========================================
 def render_header_metric(title, value, subtitle="", is_cagr=False):
-    """Merender kartu metrik kecil di pojok kanan atas"""
     val_color = "#059669" if is_cagr else "#0f172a"
     return f"""
     <div style="background-color: #ffffff; padding: 1rem 1.25rem; border-radius: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);">
@@ -80,16 +104,15 @@ def render_header_metric(title, value, subtitle="", is_cagr=False):
     """
 
 def render_kpi_card(title, ratio, limit_val, is_max_limit=True):
-    """Merender kartu KPI besar dengan Progress Bar mirip HTML Tailwind"""
     if is_max_limit:
         is_safe = ratio <= limit_val
-        safe_color = "#10b981" # emerald-500
-        danger_color = "#ef4444" # rose-500
+        safe_color = "#10b981" 
+        danger_color = "#ef4444" 
         limit_text = f"Max {limit_val:.1f}%"
     else:
         is_safe = ratio >= limit_val
-        safe_color = "#4f46e5" # indigo-500
-        danger_color = "#f59e0b" # amber-500
+        safe_color = "#4f46e5" 
+        danger_color = "#f59e0b" 
         limit_text = f"Min {limit_val:.1f}%"
 
     active_color = safe_color if is_safe else danger_color
@@ -135,7 +158,6 @@ def load_data():
         "kota cilegon": "Kota Cilegon", "kota serang": "Kota Serang", "kota tangerang": "Kota Tangerang"
     }
     
-    # Reverse mapping fallback
     for k, v in list(decode_region.items()):
         decode_region[k.replace('kabupaten ', 'kab ')] = v
 
@@ -170,7 +192,7 @@ def process_apbd_data(df):
     return summary
 
 # ==========================================
-# 4. CHART PLOTLY (TRANSPARAN & CLEAN)
+# 4. CHART PLOTLY 
 # ==========================================
 def create_perfect_chart(data, x_col, y_col, title, threshold, is_max_limit=True):
     fig = go.Figure()
@@ -189,8 +211,7 @@ def create_perfect_chart(data, x_col, y_col, title, threshold, is_max_limit=True
         marker=dict(size=12, color='#ffffff', line=dict(width=3, color=main_color)),
         text=data[y_col].round(1).astype(str) + '%',
         textposition="top center",
-        # PERBAIKAN: Menggunakan "bold" atau angka 900 tanpa tanda kutip
-        textfont=dict(size=11, color=main_color, family="Inter", weight="bold"),
+        textfont=dict(size=11, color=main_color, family="Inter", weight="bold"), # Fixed bug Plotly
         hoverinfo='skip'
     ))
     
@@ -214,7 +235,7 @@ def create_perfect_chart(data, x_col, y_col, title, threshold, is_max_limit=True
     return fig
 
 # ==========================================
-# 5. STRUKTUR APLIKASI
+# 5. STRUKTUR APLIKASI UTAMA
 # ==========================================
 def main():
     with st.spinner("Membaca Database APBD..."):
@@ -227,7 +248,11 @@ def main():
     df_summary = process_apbd_data(df_raw)
     list_pemda = sorted(df_summary['pemda'].unique().tolist())
     
-    # -- SIDEBAR KUSTOM --
+    # Inisialisasi Session State untuk mengingat menu yang dipilih
+    if 'selected_pemda' not in st.session_state:
+        st.session_state.selected_pemda = list_pemda[0]
+    
+    # -- SIDEBAR KUSTOM (DAFTAR LIST BUTTON) --
     with st.sidebar:
         st.markdown("""
             <div style="margin-bottom: 2rem;">
@@ -237,10 +262,21 @@ def main():
                 <p style="font-size: 10px; font-weight: 800; color: #818cf8; margin: 0; line-height: 1.2;">Sistem Informasi Pemantauan Alokasi Tepat Undang-Undang HKPD</p>
                 <p style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 8px;">Bidang PPA II Kanwil DJPb Provinsi Banten</p>
             </div>
+            <div style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; padding-left: 4px;">Daftar Entitas Pemda</div>
         """, unsafe_allow_html=True)
         
-        selected_region = st.selectbox("Pilih Pemda", list_pemda, label_visibility="collapsed")
+        # Merender tombol-tombol layaknya menu Navigasi
+        for pemda in list_pemda:
+            is_active = (st.session_state.selected_pemda == pemda)
+            # Jika aktif, tombol menggunakan tipe "primary", jika tidak tipe "secondary"
+            if st.button(pemda, key=pemda, use_container_width=True, type="primary" if is_active else "secondary"):
+                st.session_state.selected_pemda = pemda
+                st.rerun() # Refresh halaman dengan data baru
 
+    # Gunakan variabel dari state session yang terpilih
+    selected_region = st.session_state.selected_pemda
+
+    # -- LOGIKA KONTEN UTAMA --
     region_data = df_summary[df_summary['pemda'] == selected_region].sort_values('tahun')
     if region_data.empty: return
     latest_data = region_data.iloc[-1]
