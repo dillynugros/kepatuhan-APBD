@@ -175,7 +175,7 @@ def render_sidebar_header():
                             display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
                             box-shadow: 0 4px 12px rgba(99,102,241,0.5);">📊</div>
                 <div>
-                    <p style="font-size:1.35rem; font-weight:900; font-style:italic; color:#ffffff; 
+                    <p style="font-size:2rem; font-weight:900; font-style:italic; color:#ffffff; 
                                margin:0; letter-spacing:-0.04em; line-height:1;">
                         <span style="color:#818cf8;">SI</span>PATUH
                     </p>
@@ -449,7 +449,7 @@ def main():
         <span style="background:linear-gradient(135deg,#4f46e5,#6366f1); color:#ffffff; padding:6px 14px; 
                      border-radius:20px; font-size:10px; font-weight:900; text-transform:uppercase; 
                      letter-spacing:0.1em; box-shadow:0 3px 10px rgba(79,70,229,0.3);">
-            🗺️ Analisis Kepatuhan APBD
+            🗺️ Analisis Kepatuhan Alokasi Belanja APBD berdasarkan UU HKPD
         </span>
     </div>
     """, unsafe_allow_html=True)
